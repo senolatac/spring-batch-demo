@@ -28,6 +28,10 @@ This project contains some example scenarios about Spring Batch
 - Read from file to Messaging-Queue
 - Read from json to DB/file/MQ 
 
+#### Don't Do It
+- Don't use it instead of Message-queue
+- Don't increase the complexity for simple operations
+
 #### References
 - https://github.com/netsurfingzone/JdbcCursorItemReader-Spring-Batch-Example?tab=readme-ov-file
 - https://www.baeldung.com/spring-batch-tasklet-chunk
