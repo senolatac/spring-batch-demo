@@ -30,3 +30,4 @@ This project contains some example scenarios about Spring Batch
 
 #### References
 - https://github.com/netsurfingzone/JdbcCursorItemReader-Spring-Batch-Example?tab=readme-ov-file
+- https://www.baeldung.com/spring-batch-tasklet-chunk

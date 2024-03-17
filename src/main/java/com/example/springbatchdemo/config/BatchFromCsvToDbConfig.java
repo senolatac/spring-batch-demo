@@ -66,6 +66,13 @@ public class BatchFromCsvToDbConfig {
                 .build();
     }
 
+    /***
+     * A spring batch StepScope object is one which is unique to a specific step and not a singleton.
+     * As you probably know, the default bean scope in Spring is a singleton.
+     * But by specifying a spring batch component being StepScope means
+     * that Spring Batch will use the spring container to instantiate
+     * a new instance of that component for each step execution.
+     */
     @Bean
     @StepScope
     public ItemWriter<BookEntity> writerForCsvToDbJob() {
