@@ -20,7 +20,9 @@ import org.springframework.batch.item.file.FlatFileItemReader;
 import org.springframework.batch.item.file.builder.FlatFileItemReaderBuilder;
 import org.springframework.batch.item.file.mapping.BeanWrapperFieldSetMapper;
 import org.springframework.batch.item.support.CompositeItemProcessor;
+import org.springframework.batch.item.support.builder.CompositeItemProcessorBuilder;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.task.ThreadPoolTaskExecutorBuilder;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.io.Resource;
@@ -74,19 +76,24 @@ public class BatchFromCsvToDbConfig {
      * a new instance of that component for each step execution.
      */
     @Bean
-    @StepScope
     public ItemWriter<BookEntity> writerForCsvToDbJob() {
         return new BookWriter(bookRepository);
     }
 
     @Bean
-    @StepScope
     public ItemProcessor<BookEntity, BookEntity> processorForCsvToDbJob() {
-        CompositeItemProcessor<BookEntity, BookEntity> processor = new CompositeItemProcessor<>();
-        processor.setDelegates(List.of(new BookAuthorProcessor(), new BookTitleProcessor()));
-        return processor;
+        return new CompositeItemProcessorBuilder<BookEntity, BookEntity>()
+                .delegates(List.of(new BookAuthorProcessor(), new BookTitleProcessor()))
+                .build();
     }
 
+    /***
+     * The FlatFileItemReader does not load the entire file in memory,
+     * it streams data from it chunk by chunk.
+     * Items should be garbage collected after each processed chunk.
+     * @param resource: custom file input
+     * @return FlatFileItemReader
+     */
     @Bean
     @StepScope
     public FlatFileItemReader<BookEntity> readerForCsvToDbJob(@Value("#{jobParameters['customFile']}") Resource resource) {
@@ -104,11 +111,10 @@ public class BatchFromCsvToDbConfig {
 
     @Bean
     public ThreadPoolTaskExecutor taskExecutorForCsvToDbJob() {
-        ThreadPoolTaskExecutor threadPoolTaskExecutor = new ThreadPoolTaskExecutor();
-        threadPoolTaskExecutor.setCorePoolSize(3);
-        threadPoolTaskExecutor.setQueueCapacity(5);
-        threadPoolTaskExecutor.setThreadNamePrefix("jobForCsvToDbJob");
-        threadPoolTaskExecutor.afterPropertiesSet();
-        return threadPoolTaskExecutor;
+        return new ThreadPoolTaskExecutorBuilder()
+                .corePoolSize(3)
+                .queueCapacity(5)
+                .threadNamePrefix("jobForCsvToDbJob")
+                .build();
     }
 }

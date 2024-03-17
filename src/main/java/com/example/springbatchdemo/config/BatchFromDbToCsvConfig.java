@@ -19,6 +19,7 @@ import org.springframework.batch.item.file.builder.FlatFileItemWriterBuilder;
 import org.springframework.batch.item.file.transform.BeanWrapperFieldExtractor;
 import org.springframework.batch.item.file.transform.DelimitedLineAggregator;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.task.ThreadPoolTaskExecutorBuilder;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.io.FileSystemResource;
@@ -95,11 +96,10 @@ public class BatchFromDbToCsvConfig {
 
     @Bean
     public ThreadPoolTaskExecutor taskExecutorForDbToCsvJob() {
-        ThreadPoolTaskExecutor threadPoolTaskExecutor = new ThreadPoolTaskExecutor();
-        threadPoolTaskExecutor.setCorePoolSize(3);
-        threadPoolTaskExecutor.setQueueCapacity(5);
-        threadPoolTaskExecutor.setThreadNamePrefix("jobForDbToCsvJob");
-        threadPoolTaskExecutor.afterPropertiesSet();
-        return threadPoolTaskExecutor;
+        return new ThreadPoolTaskExecutorBuilder()
+                .corePoolSize(3)
+                .queueCapacity(5)
+                .threadNamePrefix("jobForDbToCsvJob")
+                .build();
     }
 }
