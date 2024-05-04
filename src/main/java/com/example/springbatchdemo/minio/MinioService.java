@@ -3,6 +3,7 @@ package com.example.springbatchdemo.minio;
 import io.minio.*;
 import io.minio.messages.Item;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
 import java.io.InputStream;
@@ -12,6 +13,7 @@ import java.util.Map;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
+@Lazy
 @Service
 @RequiredArgsConstructor
 public class MinioService {
