@@ -1,0 +1,13 @@
+databaseChangeLog:
+  - include:
+      file: 2024/07/09-01-co-kum-19-changelog.yaml
+      relativeToChangelogFile: true
+  - include:
+      file: 2024/07/09-02-co-kum-19-changelog.yaml
+      relativeToChangelogFile: true
+  - include:
+      file: 2024/08/07-01-co-yeap-60-changelog.yaml
+      relativeToChangelogFile: true
+  - include:
+      file: 2024/09/25-01-co-kum-99-changelog.yaml
+      relativeToChangelogFile: true
