@@ -2,16 +2,17 @@ name: Main
 on: [push]
 
 jobs:
-  build_test:
-    name: Build and Test
+  codacy_report:
+    name: Codacy Report
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Set up JDK 17
-        uses: actions/setup-java@v4
+      - name: Run codacy-coverage-reporter
+        uses: codacy/codacy-coverage-reporter-action@v1.3.0
         with:
-          distribution: 'zulu'
-          java-version: 17
-
-      - name: Build project with Maven
-        run: mvn -B package --file pom.xml
+          project-token: ${{ secrets.CODACY_PROJECT_TOKEN }}
+          # or
+          # api-token: ${{ secrets.CODACY_API_TOKEN }}
+          coverage-reports: "target/site/jacoco/jacoco.xml"
+          # or a comma-separated list for multiple reports
+          # coverage-reports: <PATH_TO_REPORT>, <PATH_TO_REPORT>
