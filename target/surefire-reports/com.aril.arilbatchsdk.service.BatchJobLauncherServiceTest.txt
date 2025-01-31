@@ -1,4 +1,4 @@
 -------------------------------------------------------------------------------
 Test set: com.aril.arilbatchsdk.service.BatchJobLauncherServiceTest
 -------------------------------------------------------------------------------
-Tests run: 20, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 2.288 s -- in com.aril.arilbatchsdk.service.BatchJobLauncherServiceTest
+Tests run: 20, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 1.529 s -- in com.aril.arilbatchsdk.service.BatchJobLauncherServiceTest

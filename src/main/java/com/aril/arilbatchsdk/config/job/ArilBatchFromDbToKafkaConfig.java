@@ -4,14 +4,11 @@ import com.aril.arilbatchsdk.config.ArilBatchConfigConstants;
 import com.aril.arilbatchsdk.config.ArilBatchProperties;
 import com.aril.arilbatchsdk.core.BatchType;
 import com.aril.arilbatchsdk.core.item.kafka.KafkaItemIdempotentWriter;
-import com.aril.arilbatchsdk.core.item.kafka.KafkaItemIdempotentWriterBuilder;
-import com.aril.arilbatchsdk.core.item.support.IdempotentWriter;
 import com.aril.arilbatchsdk.core.listener.ChunkStepExecutionListener;
 import com.aril.arilbatchsdk.core.listener.IdempotentJobEventProcessorListener;
 import com.aril.arilbatchsdk.core.listener.JobExecutionStatusChangeListener;
 import com.aril.arilbatchsdk.core.parameter.BatchDbToKafkaJobParameter;
 import com.aril.arilbatchsdk.core.parameter.support.BatchJobParameterWrapper;
-import com.aril.arilbatchsdk.core.parameter.support.RepositoryItemReaderParameter;
 import com.aril.arilbatchsdk.core.processor.IdempotentJobEventProcessor;
 import com.aril.arilbatchsdk.core.skip.IdempotentSkipPolicy;
 import com.aril.arilbatchsdk.core.tasklet.consumer.ConsumerTrackerTasklet;
@@ -35,7 +32,6 @@ import org.springframework.batch.core.repository.JobRepository;
 import org.springframework.batch.core.step.builder.StepBuilder;
 import org.springframework.batch.item.ItemProcessor;
 import org.springframework.batch.item.data.RepositoryItemReader;
-import org.springframework.batch.item.data.builder.RepositoryItemReaderBuilder;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
@@ -51,7 +47,7 @@ import org.springframework.transaction.PlatformTransactionManager;
 @EnableArilKafka
 @EnableArilIdempotent
 @ConditionalOnClass({JpaRepository.class, ArilKafkaTemplate.class, ArilIdempotentTemplate.class})
-public class ArilBatchFromDbToKafkaConfig {
+public class ArilBatchFromDbToKafkaConfig extends AbstractArilBatchConfig {
 
     public static final String READER_NAME = "readerForDbToKafkaJob";
     public static final String CHUNK_STEP_NAME = "chunkStepForDbToKafkaJob";
@@ -120,16 +116,11 @@ public class ArilBatchFromDbToKafkaConfig {
     @StepScope
     public <T extends IdempotentBatchItem> RepositoryItemReader<T> readerForDbToKafkaJob(
             @Value("#{jobParameters[T(com.aril.arilbatchsdk.config.ArilBatchConfigConstants).INPUT_PARAM]}") BatchJobParameterWrapper<BatchDbToKafkaJobParameter> inputParam) {
-        RepositoryItemReaderParameter repositoryItemReader = inputParam.getJobParameter().getRepositoryItemReader();
-
-        return new RepositoryItemReaderBuilder<T>()
-                .name(READER_NAME)
-                .repository(repositoryItemReader.getRepository())
-                .methodName(repositoryItemReader.getMethodName())
-                .pageSize(inputParam.getJobParameter().getChunkSize())
-                .arguments(repositoryItemReader.getArguments())
-                .sorts(repositoryItemReader.getSorts())
-                .build();
+        return configureRepositoryItemReader(
+                READER_NAME,
+                inputParam.getJobParameter().getRepositoryItemReader(),
+                inputParam.getJobParameter().getChunkSize()
+        );
     }
 
     @Bean
@@ -150,12 +141,12 @@ public class ArilBatchFromDbToKafkaConfig {
             @Qualifier(BeanIds.ARIL_KAFKA_TEMPLATE) ArilKafkaTemplate<String, D> arilKafkaTemplate,
             ArilIdempotentTemplate arilIdempotentTemplate,
             @Value("#{jobParameters[T(com.aril.arilbatchsdk.config.ArilBatchConfigConstants).INPUT_PARAM]}") BatchJobParameterWrapper<BatchDbToKafkaJobParameter> inputParam) {
-        return new KafkaItemIdempotentWriterBuilder<D>()
-                .name(inputParam.getJobParameter().getJobName())
-                .topic(inputParam.getJobParameter().getTopic())
-                .idempotencyOptions(inputParam.getJobParameter().getIdempotencyOptions())
-                .idempotentWriter(new IdempotentWriter(arilIdempotentTemplate))
-                .kafkaTemplate(arilKafkaTemplate)
-                .build();
+        return configureKafkaItemIdempotentWriter(
+                inputParam.getJobParameter().getJobName(),
+                inputParam.getJobParameter().getTopic(),
+                inputParam.getJobParameter().getIdempotencyOptions(),
+                arilIdempotentTemplate,
+                arilKafkaTemplate
+        );
     }
 }

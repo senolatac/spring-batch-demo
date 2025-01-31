@@ -86,7 +86,6 @@ com/aril/arilbatchsdk/entity/BatchJobItemResult_.class
 com/aril/arilbatchsdk/adapter/kafka/KafkaConsumerStatsAdapter.class
 com/aril/arilbatchsdk/core/listener/JobExecutionStatusChangeListener.class
 com/aril/arilbatchsdk/core/parameter/BatchExcelToServiceJobParameter$BatchExcelToServiceJobParameterBuilderImpl.class
-com/aril/arilbatchsdk/core/converter/StringToBatchJobParameterWrapperConverter$1.class
 com/aril/arilbatchsdk/entity/BatchJobResultSummary_.class
 com/aril/arilbatchsdk/core/parameter/BatchExcelToServiceJobParameter$BatchExcelToServiceJobParameterBuilder.class
 com/aril/arilbatchsdk/config/job/ArilBatchFromCsvToDbConfig.class

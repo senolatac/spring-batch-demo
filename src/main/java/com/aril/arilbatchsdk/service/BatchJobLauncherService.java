@@ -1,35 +1,21 @@
 package com.aril.arilbatchsdk.service;
 
-import com.aril.arilbatchsdk.config.ArilBatchConfigConstants;
 import org.springframework.batch.core.Job;
 import org.springframework.batch.core.launch.JobLauncher;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
+
+import java.util.Map;
 
 @Lazy
 @Service
 public class BatchJobLauncherService extends BaseBatchJobLauncherService {
     private final JobLauncher jobLauncher;
 
-    protected BatchJobLauncherService(@Autowired(required = false) @Qualifier(ArilBatchConfigConstants.JOB_FOR_CSV_TO_DB) Job jobForCsvToDb,
-                                      @Autowired(required = false) @Qualifier(ArilBatchConfigConstants.JOB_FOR_CSV_TO_SERVICE) Job jobForCsvToService,
-                                      @Autowired(required = false) @Qualifier(ArilBatchConfigConstants.JOB_FOR_CSV_TO_KAFKA) Job jobForCsvToKafka,
-                                      @Autowired(required = false) @Qualifier(ArilBatchConfigConstants.JOB_FOR_DB_TO_CSV) Job jobForDbToCsv,
-                                      @Autowired(required = false) @Qualifier(ArilBatchConfigConstants.JOB_FOR_DB_TO_EXCEL) Job jobForDbToExcel,
-                                      @Autowired(required = false) @Qualifier(ArilBatchConfigConstants.JOB_FOR_DB_TO_SERVICE) Job jobForDbToService,
-                                      @Autowired(required = false) @Qualifier(ArilBatchConfigConstants.JOB_FOR_SERVICE_TO_EXCEL) Job jobForServiceToExcel,
-                                      @Autowired(required = false) @Qualifier(ArilBatchConfigConstants.JOB_FOR_CONTROLLER_TO_EXCEL) Job jobForControllerToExcel,
-                                      @Autowired(required = false) @Qualifier(ArilBatchConfigConstants.JOB_FOR_CONTROLLER_TO_CSV) Job jobForControllerToCsv,
-                                      @Autowired(required = false) @Qualifier(ArilBatchConfigConstants.JOB_FOR_SERVICE_TO_KAFKA) Job jobForServiceToKafka,
-                                      @Autowired(required = false) @Qualifier(ArilBatchConfigConstants.JOB_FOR_DB_TO_KAFKA) Job jobForDbToKafka,
-                                      @Autowired(required = false) @Qualifier(ArilBatchConfigConstants.JOB_FOR_EXCEL_TO_KAFKA) Job jobForExcelToKafka,
-                                      @Autowired(required = false) @Qualifier(ArilBatchConfigConstants.JOB_FOR_EXCEL_TO_DB) Job jobForExcelToDb,
-                                      @Autowired(required = false) @Qualifier(ArilBatchConfigConstants.JOB_FOR_EXCEL_TO_SERVICE) Job jobForExcelToService,
-                                      @Autowired(required = false) @Qualifier(ArilBatchConfigConstants.JOB_FOR_SERVICE_TO_DB) Job jobForServiceToDb,
+    protected BatchJobLauncherService(@Autowired(required = false) Map<String, Job> jobs,
                                       JobLauncher jobLauncher) {
-        super(jobForCsvToDb, jobForCsvToService, jobForCsvToKafka, jobForDbToCsv, jobForDbToExcel, jobForDbToService, jobForServiceToExcel, jobForControllerToExcel, jobForControllerToCsv, jobForServiceToKafka, jobForDbToKafka, jobForExcelToKafka, jobForExcelToDb, jobForExcelToService, jobForServiceToDb);
+        super(jobs);
         this.jobLauncher = jobLauncher;
     }
 

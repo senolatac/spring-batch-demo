@@ -1,5 +1,8 @@
 package com.aril.arilbatchsdk.core.parameter.support;
 
+import com.aril.arilbatchsdk.core.parameter.BaseBatchJobParameter;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.google.gson.annotations.SerializedName;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -11,8 +14,12 @@ import java.io.Serializable;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class BatchJobParameterWrapper<T> implements Serializable {
+public class BatchJobParameterWrapper<T extends BaseBatchJobParameter> implements Serializable {
 
-    @SuppressWarnings("java:S1948")
+    public static final String JOB_PARAMETER_CLASS_PROPERTY = "jobParameterClass";
+    @JsonProperty(JOB_PARAMETER_CLASS_PROPERTY)
+    @SerializedName(JOB_PARAMETER_CLASS_PROPERTY)
+    private String jobParameterClass;
+
     private T jobParameter;
 }

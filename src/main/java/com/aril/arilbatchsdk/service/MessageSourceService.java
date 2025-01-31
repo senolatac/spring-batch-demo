@@ -1,5 +1,6 @@
 package com.aril.arilbatchsdk.service;
 
+import com.aril.valhala.context.LocaleContext;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.MessageSource;
 import org.springframework.stereotype.Service;
@@ -17,7 +18,7 @@ public class MessageSourceService {
 
     public MessageSourceService(MessageSource messageSource) {
         this.messageSource = messageSource;
-        this.locale = Locale.getDefault();
+        this.locale = LocaleContext.getLocale();
     }
 
     public String getMessage(String key) {
@@ -30,11 +31,13 @@ public class MessageSourceService {
 
     public String getMessage(String key, String[] args, Locale requestedLocale) {
         try {
-            requestedLocale = Objects.requireNonNullElse(requestedLocale, Locale.getDefault());
-            args = Objects.requireNonNullElse(args, EMPTY_ARRAY);
-            return messageSource.getMessage(key, args, requestedLocale);
+            return messageSource.getMessage(
+                    key,
+                    Objects.requireNonNullElse(args, EMPTY_ARRAY),
+                    Objects.requireNonNullElse(requestedLocale, LocaleContext.getLocale()));
         } catch (Exception ex) {
-            log.error("Unexpected exception occurred on message-localization", ex);
+            log.error("Message key not found with: {}", key);
+            log.debug("Unexpected exception occurred on message-localization with key: {}", key, ex);
             return key;
         }
     }

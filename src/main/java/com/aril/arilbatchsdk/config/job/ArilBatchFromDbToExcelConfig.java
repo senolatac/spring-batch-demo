@@ -5,13 +5,10 @@ import com.aril.arilbatchsdk.config.ArilBatchProperties;
 import com.aril.arilbatchsdk.core.BatchType;
 import com.aril.arilbatchsdk.core.FileUploader;
 import com.aril.arilbatchsdk.core.item.excel.ExcelStreamItemWriter;
-import com.aril.arilbatchsdk.core.item.excel.ExcelStreamItemWriterBuilder;
-import com.aril.arilbatchsdk.core.item.excel.support.DefaultExcelStreamHeaderCallback;
 import com.aril.arilbatchsdk.core.listener.ChunkStepExecutionListener;
 import com.aril.arilbatchsdk.core.listener.JobExecutionStatusChangeListener;
 import com.aril.arilbatchsdk.core.parameter.BatchDbToExcelJobParameter;
 import com.aril.arilbatchsdk.core.parameter.support.BatchJobParameterWrapper;
-import com.aril.arilbatchsdk.core.parameter.support.RepositoryItemReaderParameter;
 import com.aril.arilbatchsdk.core.tasklet.export.ExportMetadataTasklet;
 import com.aril.arilbatchsdk.core.tasklet.file.ExcelFileUploaderTasklet;
 import com.aril.arilbatchsdk.core.tasklet.file.LocalFileDeleteTasklet;
@@ -28,20 +25,18 @@ import org.springframework.batch.core.repository.JobRepository;
 import org.springframework.batch.core.step.builder.StepBuilder;
 import org.springframework.batch.item.ItemProcessor;
 import org.springframework.batch.item.data.RepositoryItemReader;
-import org.springframework.batch.item.data.builder.RepositoryItemReaderBuilder;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Lazy;
-import org.springframework.core.io.FileSystemResource;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.transaction.PlatformTransactionManager;
 
 @Lazy
 @Configuration
 @ConditionalOnClass(JpaRepository.class)
-public class ArilBatchFromDbToExcelConfig {
+public class ArilBatchFromDbToExcelConfig extends AbstractArilBatchConfig {
 
     public static final String READER_NAME = "readerForDbToExcelJob";
     private static final String WRITER_NAME = "writerForDbToExcelJob";
@@ -136,16 +131,11 @@ public class ArilBatchFromDbToExcelConfig {
     @StepScope
     public <T extends BatchItem> RepositoryItemReader<T> readerForDbToExcelJob(
             @Value("#{jobParameters[T(com.aril.arilbatchsdk.config.ArilBatchConfigConstants).INPUT_PARAM]}") BatchJobParameterWrapper<BatchDbToExcelJobParameter> inputParam) {
-        RepositoryItemReaderParameter repositoryItemReader = inputParam.getJobParameter().getRepositoryItemReader();
-
-        return new RepositoryItemReaderBuilder<T>()
-                .name(READER_NAME)
-                .repository(repositoryItemReader.getRepository())
-                .methodName(repositoryItemReader.getMethodName())
-                .pageSize(inputParam.getJobParameter().getChunkSize())
-                .arguments(repositoryItemReader.getArguments())
-                .sorts(repositoryItemReader.getSorts())
-                .build();
+        return configureRepositoryItemReader(
+                READER_NAME,
+                inputParam.getJobParameter().getRepositoryItemReader(),
+                inputParam.getJobParameter().getChunkSize()
+        );
     }
 
     @Bean
@@ -164,12 +154,12 @@ public class ArilBatchFromDbToExcelConfig {
     public <D extends BatchItem> ExcelStreamItemWriter<D> writerForDbToExcelJob(
             @Value("#{jobParameters[T(com.aril.arilbatchsdk.config.ArilBatchConfigConstants).INPUT_PARAM]}") BatchJobParameterWrapper<BatchDbToExcelJobParameter> inputParam,
             @Value("#{jobParameters[T(com.aril.arilbatchsdk.config.ArilBatchConfigConstants).INPUT_PARAM_IDENTIFIER]}") String identifier) {
-        return new ExcelStreamItemWriterBuilder<D>()
-                .name(WRITER_NAME)
-                .resource(new FileSystemResource(JobUtils.getExcelFilenameById(identifier)))
-                .columnNames(inputParam.getJobParameter().getOutputFields())
-                .headerCallback(new DefaultExcelStreamHeaderCallback(inputParam.getJobParameter().getHeaderColumns()))
-                .thousandSeparatorFormat(inputParam.getJobParameter().getThousandSeparatorFormat())
-                .build();
+        return configureExcelStreamItemWriter(
+                WRITER_NAME,
+                identifier,
+                inputParam.getJobParameter().getOutputFields(),
+                inputParam.getJobParameter().getHeaderColumns(),
+                inputParam.getJobParameter().getThousandSeparatorFormat()
+        );
     }
 }

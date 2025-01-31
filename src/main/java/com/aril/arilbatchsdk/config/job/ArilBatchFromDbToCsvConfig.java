@@ -8,7 +8,6 @@ import com.aril.arilbatchsdk.core.listener.ChunkStepExecutionListener;
 import com.aril.arilbatchsdk.core.listener.JobExecutionStatusChangeListener;
 import com.aril.arilbatchsdk.core.parameter.BatchDbToCsvJobParameter;
 import com.aril.arilbatchsdk.core.parameter.support.BatchJobParameterWrapper;
-import com.aril.arilbatchsdk.core.parameter.support.RepositoryItemReaderParameter;
 import com.aril.arilbatchsdk.core.tasklet.export.ExportMetadataTasklet;
 import com.aril.arilbatchsdk.core.tasklet.file.CsvFileUploaderTasklet;
 import com.aril.arilbatchsdk.core.tasklet.file.LocalFileDeleteTasklet;
@@ -25,15 +24,12 @@ import org.springframework.batch.core.repository.JobRepository;
 import org.springframework.batch.core.step.builder.StepBuilder;
 import org.springframework.batch.item.ItemProcessor;
 import org.springframework.batch.item.data.RepositoryItemReader;
-import org.springframework.batch.item.data.builder.RepositoryItemReaderBuilder;
 import org.springframework.batch.item.file.FlatFileItemWriter;
-import org.springframework.batch.item.file.builder.FlatFileItemWriterBuilder;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Lazy;
-import org.springframework.core.io.FileSystemResource;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.transaction.PlatformTransactionManager;
 
@@ -135,16 +131,11 @@ public class ArilBatchFromDbToCsvConfig extends AbstractArilBatchConfig {
     @StepScope
     public <T extends BatchItem> RepositoryItemReader<T> readerForDbToCsvJob(
             @Value("#{jobParameters[T(com.aril.arilbatchsdk.config.ArilBatchConfigConstants).INPUT_PARAM]}") BatchJobParameterWrapper<BatchDbToCsvJobParameter> inputParam) {
-        RepositoryItemReaderParameter repositoryItemReader = inputParam.getJobParameter().getRepositoryItemReader();
-
-        return new RepositoryItemReaderBuilder<T>()
-                .name(READER_NAME)
-                .repository(repositoryItemReader.getRepository())
-                .methodName(repositoryItemReader.getMethodName())
-                .pageSize(inputParam.getJobParameter().getChunkSize())
-                .arguments(repositoryItemReader.getArguments())
-                .sorts(repositoryItemReader.getSorts())
-                .build();
+        return configureRepositoryItemReader(
+                READER_NAME,
+                inputParam.getJobParameter().getRepositoryItemReader(),
+                inputParam.getJobParameter().getChunkSize()
+        );
     }
 
     @Bean
@@ -163,11 +154,11 @@ public class ArilBatchFromDbToCsvConfig extends AbstractArilBatchConfig {
     public <D extends BatchItem> FlatFileItemWriter<D> writerForDbToCsvJob(
             @Value("#{jobParameters[T(com.aril.arilbatchsdk.config.ArilBatchConfigConstants).INPUT_PARAM]}") BatchJobParameterWrapper<BatchDbToCsvJobParameter> inputParam,
             @Value("#{jobParameters[T(com.aril.arilbatchsdk.config.ArilBatchConfigConstants).INPUT_PARAM_IDENTIFIER]}") String identifier) {
-        return new FlatFileItemWriterBuilder<D>()
-                .name(WRITER_NAME)
-                .resource(new FileSystemResource(JobUtils.getCsvFilenameById(identifier)))
-                .headerCallback(writer -> writer.write(inputParam.getJobParameter().getOutputHeader()))
-                .lineAggregator(delimitedLineAggregator(inputParam.getJobParameter().getOutputFields()))
-                .build();
+        return configureFlatFileItemWriter(
+                WRITER_NAME,
+                identifier,
+                inputParam.getJobParameter().getOutputHeader(),
+                inputParam.getJobParameter().getOutputFields()
+        );
     }
 }

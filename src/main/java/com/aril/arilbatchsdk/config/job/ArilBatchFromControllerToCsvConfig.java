@@ -25,13 +25,11 @@ import org.springframework.batch.core.repository.JobRepository;
 import org.springframework.batch.core.step.builder.StepBuilder;
 import org.springframework.batch.item.ItemProcessor;
 import org.springframework.batch.item.file.FlatFileItemWriter;
-import org.springframework.batch.item.file.builder.FlatFileItemWriterBuilder;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Lazy;
-import org.springframework.core.io.FileSystemResource;
 import org.springframework.http.ResponseEntity;
 import org.springframework.transaction.PlatformTransactionManager;
 
@@ -153,11 +151,11 @@ public class ArilBatchFromControllerToCsvConfig extends AbstractArilBatchConfig 
     public <D extends BatchItem> FlatFileItemWriter<D> writerForControllerToCsvJob(
             @Value("#{jobParameters[T(com.aril.arilbatchsdk.config.ArilBatchConfigConstants).INPUT_PARAM]}") BatchJobParameterWrapper<BatchControllerToCsvJobParameter> inputParam,
             @Value("#{jobParameters[T(com.aril.arilbatchsdk.config.ArilBatchConfigConstants).INPUT_PARAM_IDENTIFIER]}") String identifier) {
-        return new FlatFileItemWriterBuilder<D>()
-                .name(WRITER_NAME)
-                .resource(new FileSystemResource(JobUtils.getCsvFilenameById(identifier)))
-                .headerCallback(writer -> writer.write(inputParam.getJobParameter().getOutputHeader()))
-                .lineAggregator(delimitedLineAggregator(inputParam.getJobParameter().getOutputFields()))
-                .build();
+        return configureFlatFileItemWriter(
+                WRITER_NAME,
+                identifier,
+                inputParam.getJobParameter().getOutputHeader(),
+                inputParam.getJobParameter().getOutputFields()
+        );
     }
 }

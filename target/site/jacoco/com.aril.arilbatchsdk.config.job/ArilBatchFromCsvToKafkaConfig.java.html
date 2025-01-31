@@ -4,8 +4,6 @@ import com.aril.arilbatchsdk.config.ArilBatchConfigConstants;
 import com.aril.arilbatchsdk.config.ArilBatchProperties;
 import com.aril.arilbatchsdk.core.BatchType;
 import com.aril.arilbatchsdk.core.item.kafka.KafkaItemIdempotentWriter;
-import com.aril.arilbatchsdk.core.item.kafka.KafkaItemIdempotentWriterBuilder;
-import com.aril.arilbatchsdk.core.item.support.IdempotentWriter;
 import com.aril.arilbatchsdk.core.listener.ChunkStepExecutionListener;
 import com.aril.arilbatchsdk.core.listener.IdempotentJobEventProcessorListener;
 import com.aril.arilbatchsdk.core.listener.JobExecutionStatusChangeListener;
@@ -48,7 +46,7 @@ import org.springframework.transaction.PlatformTransactionManager;
 @EnableArilKafka
 @EnableArilIdempotent
 @ConditionalOnClass({ArilKafkaTemplate.class, ArilIdempotentTemplate.class})
-<span class="fc" id="L51">public class ArilBatchFromCsvToKafkaConfig extends AbstractArilBatchConfig {</span>
+<span class="fc" id="L49">public class ArilBatchFromCsvToKafkaConfig extends AbstractArilBatchConfig {</span>
 
     public static final String READER_NAME = &quot;readerForCsvToKafkaJob&quot;;
     public static final String CHUNK_STEP_NAME = &quot;chunkStepForCsvToKafkaJob&quot;;
@@ -60,12 +58,12 @@ import org.springframework.transaction.PlatformTransactionManager;
                                    Step chunkStepForCsvToKafkaJob,
                                    Step logStepForCsvToKafkaJob,
                                    JobExecutionStatusChangeListener jobExecutionStatusChangeListenerForCsvToKafkaJob) {
-<span class="fc" id="L63">        return new JobBuilder(JOB_NAME, jobRepository)</span>
-<span class="fc" id="L64">                .incrementer(new RunIdIncrementer())</span>
-<span class="fc" id="L65">                .start(chunkStepForCsvToKafkaJob)</span>
-<span class="fc" id="L66">                .next(logStepForCsvToKafkaJob)</span>
-<span class="fc" id="L67">                .listener(jobExecutionStatusChangeListenerForCsvToKafkaJob)</span>
-<span class="fc" id="L68">                .build();</span>
+<span class="fc" id="L61">        return new JobBuilder(JOB_NAME, jobRepository)</span>
+<span class="fc" id="L62">                .incrementer(new RunIdIncrementer())</span>
+<span class="fc" id="L63">                .start(chunkStepForCsvToKafkaJob)</span>
+<span class="fc" id="L64">                .next(logStepForCsvToKafkaJob)</span>
+<span class="fc" id="L65">                .listener(jobExecutionStatusChangeListenerForCsvToKafkaJob)</span>
+<span class="fc" id="L66">                .build();</span>
     }
 
     @Bean
@@ -73,7 +71,7 @@ import org.springframework.transaction.PlatformTransactionManager;
     public JobExecutionStatusChangeListener jobExecutionStatusChangeListenerForCsvToKafkaJob(
             @Value(&quot;#{jobParameters[T(com.aril.arilbatchsdk.config.ArilBatchConfigConstants).INPUT_PARAM]}&quot;) BatchJobParameterWrapper&lt;BatchCsvToKafkaJobParameter&gt; inputParam
     ) {
-<span class="fc" id="L76">        return new JobExecutionStatusChangeListener(inputParam.getJobParameter().getJobExecutionChangeSubscriber());</span>
+<span class="fc" id="L74">        return new JobExecutionStatusChangeListener(inputParam.getJobParameter().getJobExecutionChangeSubscriber());</span>
     }
 
     @Bean
@@ -87,19 +85,19 @@ import org.springframework.transaction.PlatformTransactionManager;
                                                                             IdempotentJobEventProcessorListener idempotentJobEventProcessorListener,
                                                                             ItemProcessor&lt;? extends IdempotentBatchItem, ? extends IdempotentJobEvent&lt;?&gt;&gt; processorForCsvToKafkaJob,
                                                                             @Value(&quot;#{jobParameters[T(com.aril.arilbatchsdk.config.ArilBatchConfigConstants).INPUT_PARAM]}&quot;) BatchJobParameterWrapper&lt;BatchCsvToKafkaJobParameter&gt; inputParam) throws Exception {
-<span class="fc" id="L90">        return new StepBuilder(CHUNK_STEP_NAME, jobRepository)</span>
-<span class="fc" id="L91">                .&lt;IdempotentBatchItem, D&gt;chunk(inputParam.getJobParameter().getChunkSize(), transactionManager)</span>
-<span class="fc" id="L92">                .reader(readerForCsvToKafkaJob(inputParam))</span>
-<span class="fc" id="L93">                .processor((ItemProcessor&lt;? super IdempotentBatchItem, ? extends D&gt;) processorForCsvToKafkaJob)</span>
-<span class="fc" id="L94">                .listener(idempotentJobEventProcessorListener)</span>
-<span class="fc" id="L95">                .writer(writerForCsvToKafkaJob)</span>
-<span class="fc" id="L96">                .listener(new ChunkStepExecutionListener(BatchType.CSV_TO_KAFKA, arilBatchProperties.getActiveModule(), inputParam.getJobParameter(), arilBatchJobSummaryService))</span>
-<span class="fc" id="L97">                .faultTolerant()</span>
-<span class="fc" id="L98">                .skip(ArilIdempotentException.class)</span>
-<span class="fc" id="L99">                .skipPolicy(new IdempotentSkipPolicy())</span>
-<span class="fc" id="L100">                .retryPolicy(new NeverRetryPolicy())</span>
-<span class="fc" id="L101">                .processorNonTransactional()</span>
-<span class="fc" id="L102">                .build();</span>
+<span class="fc" id="L88">        return new StepBuilder(CHUNK_STEP_NAME, jobRepository)</span>
+<span class="fc" id="L89">                .&lt;IdempotentBatchItem, D&gt;chunk(inputParam.getJobParameter().getChunkSize(), transactionManager)</span>
+<span class="fc" id="L90">                .reader(readerForCsvToKafkaJob(inputParam))</span>
+<span class="fc" id="L91">                .processor((ItemProcessor&lt;? super IdempotentBatchItem, ? extends D&gt;) processorForCsvToKafkaJob)</span>
+<span class="fc" id="L92">                .listener(idempotentJobEventProcessorListener)</span>
+<span class="fc" id="L93">                .writer(writerForCsvToKafkaJob)</span>
+<span class="fc" id="L94">                .listener(new ChunkStepExecutionListener(BatchType.CSV_TO_KAFKA, arilBatchProperties.getActiveModule(), inputParam.getJobParameter(), arilBatchJobSummaryService))</span>
+<span class="fc" id="L95">                .faultTolerant()</span>
+<span class="fc" id="L96">                .skip(ArilIdempotentException.class)</span>
+<span class="fc" id="L97">                .skipPolicy(new IdempotentSkipPolicy())</span>
+<span class="fc" id="L98">                .retryPolicy(new NeverRetryPolicy())</span>
+<span class="fc" id="L99">                .processorNonTransactional()</span>
+<span class="fc" id="L100">                .build();</span>
     }
 
     @Bean
@@ -108,17 +106,17 @@ import org.springframework.transaction.PlatformTransactionManager;
                                         BatchConsumerTrackerFacade batchConsumerTrackerFacade,
                                         PlatformTransactionManager transactionManager,
                                         @Value(&quot;#{jobParameters[T(com.aril.arilbatchsdk.config.ArilBatchConfigConstants).INPUT_PARAM]}&quot;) BatchJobParameterWrapper&lt;BatchCsvToKafkaJobParameter&gt; inputParam) {
-<span class="fc" id="L111">        return new StepBuilder(LOG_STEP_NAME, jobRepository)</span>
-<span class="fc" id="L112">                .tasklet(new ConsumerTrackerTasklet(batchConsumerTrackerFacade, inputParam.getJobParameter().getTopic(), inputParam.getJobParameter().getConsumerCompletedNotifierTopic(), CHUNK_STEP_NAME), transactionManager)</span>
-<span class="fc" id="L113">                .build();</span>
+<span class="fc" id="L109">        return new StepBuilder(LOG_STEP_NAME, jobRepository)</span>
+<span class="fc" id="L110">                .tasklet(new ConsumerTrackerTasklet(batchConsumerTrackerFacade, inputParam.getJobParameter().getTopic(), inputParam.getJobParameter().getConsumerCompletedNotifierTopic(), CHUNK_STEP_NAME), transactionManager)</span>
+<span class="fc" id="L111">                .build();</span>
     }
 
     @Bean
     @StepScope
     public &lt;T extends IdempotentBatchItem&gt; FlatFileItemReader&lt;T&gt; readerForCsvToKafkaJob(
             @Value(&quot;#{jobParameters[T(com.aril.arilbatchsdk.config.ArilBatchConfigConstants).INPUT_PARAM]}&quot;) BatchJobParameterWrapper&lt;BatchCsvToKafkaJobParameter&gt; inputParam) throws Exception {
-<span class="fc" id="L120">        BatchCsvToKafkaJobParameter jobParameter = inputParam.getJobParameter();</span>
-<span class="fc" id="L121">        return configureFlatFileItemReader(READER_NAME, jobParameter.getResource(), jobParameter.getInputFields(), jobParameter.getInputItemClass());</span>
+<span class="fc" id="L118">        BatchCsvToKafkaJobParameter jobParameter = inputParam.getJobParameter();</span>
+<span class="fc" id="L119">        return configureFlatFileItemReader(READER_NAME, jobParameter.getResource(), jobParameter.getInputFields(), jobParameter.getInputItemClass());</span>
     }
 
     @Bean
@@ -127,10 +125,10 @@ import org.springframework.transaction.PlatformTransactionManager;
     public &lt;I extends IdempotentBatchItem, O extends IdempotentJobEvent&lt;?&gt;&gt; ItemProcessor&lt;I, O&gt; processorForCsvToKafkaJob(
             @Value(&quot;#{jobParameters[T(com.aril.arilbatchsdk.config.ArilBatchConfigConstants).INPUT_PARAM]}&quot;) BatchJobParameterWrapper&lt;BatchCsvToKafkaJobParameter&gt; inputParam,
             IdempotentJobEventProcessor idempotentJobEventProcessor) {
-<span class="pc bpc" id="L130" title="1 of 2 branches missed.">        if (inputParam.getJobParameter().getItemProcessor() != null) {</span>
-<span class="nc" id="L131">            return (ItemProcessor&lt;I, O&gt;) inputParam.getJobParameter().getItemProcessor();</span>
+<span class="pc bpc" id="L128" title="1 of 2 branches missed.">        if (inputParam.getJobParameter().getItemProcessor() != null) {</span>
+<span class="nc" id="L129">            return (ItemProcessor&lt;I, O&gt;) inputParam.getJobParameter().getItemProcessor();</span>
         }
-<span class="fc" id="L133">        return (ItemProcessor&lt;I, O&gt;) idempotentJobEventProcessor;</span>
+<span class="fc" id="L131">        return (ItemProcessor&lt;I, O&gt;) idempotentJobEventProcessor;</span>
     }
 
     @Bean
@@ -139,13 +137,13 @@ import org.springframework.transaction.PlatformTransactionManager;
             @Qualifier(BeanIds.ARIL_KAFKA_TEMPLATE) ArilKafkaTemplate&lt;String, D&gt; arilKafkaTemplate,
             ArilIdempotentTemplate arilIdempotentTemplate,
             @Value(&quot;#{jobParameters[T(com.aril.arilbatchsdk.config.ArilBatchConfigConstants).INPUT_PARAM]}&quot;) BatchJobParameterWrapper&lt;BatchCsvToKafkaJobParameter&gt; inputParam) {
-<span class="fc" id="L142">        return new KafkaItemIdempotentWriterBuilder&lt;D&gt;()</span>
-<span class="fc" id="L143">                .name(inputParam.getJobParameter().getJobName())</span>
-<span class="fc" id="L144">                .topic(inputParam.getJobParameter().getTopic())</span>
-<span class="fc" id="L145">                .idempotencyOptions(inputParam.getJobParameter().getIdempotencyOptions())</span>
-<span class="fc" id="L146">                .idempotentWriter(new IdempotentWriter(arilIdempotentTemplate))</span>
-<span class="fc" id="L147">                .kafkaTemplate(arilKafkaTemplate)</span>
-<span class="fc" id="L148">                .build();</span>
+<span class="fc" id="L140">        return configureKafkaItemIdempotentWriter(</span>
+<span class="fc" id="L141">                inputParam.getJobParameter().getJobName(),</span>
+<span class="fc" id="L142">                inputParam.getJobParameter().getTopic(),</span>
+<span class="fc" id="L143">                inputParam.getJobParameter().getIdempotencyOptions(),</span>
+                arilIdempotentTemplate,
+                arilKafkaTemplate
+        );
     }
 }
 </pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.11.202310140853</span></div></body></html>

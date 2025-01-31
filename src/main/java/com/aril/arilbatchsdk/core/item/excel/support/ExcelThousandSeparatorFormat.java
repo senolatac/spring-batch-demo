@@ -20,10 +20,10 @@ public enum ExcelThousandSeparatorFormat {
     private final Locale locale;
 
     public static ExcelThousandSeparatorFormat findByLocale(Locale locale) {
-        locale = Objects.requireNonNullElse(locale, LocaleUtils.getSystemLocale());
+        Locale targetLocale = Objects.requireNonNullElse(locale, LocaleUtils.getSystemLocale());
 
         for (ExcelThousandSeparatorFormat separatorFormat : _VALUES) {
-            if (separatorFormat.getLocale().getLanguage().equals(locale.getLanguage())) {
+            if (separatorFormat.getLocale().getLanguage().equals(targetLocale.getLanguage())) {
                 return separatorFormat;
             }
         }

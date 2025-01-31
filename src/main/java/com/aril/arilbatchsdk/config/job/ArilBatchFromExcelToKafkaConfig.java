@@ -4,8 +4,6 @@ import com.aril.arilbatchsdk.config.ArilBatchConfigConstants;
 import com.aril.arilbatchsdk.config.ArilBatchProperties;
 import com.aril.arilbatchsdk.core.BatchType;
 import com.aril.arilbatchsdk.core.item.kafka.KafkaItemIdempotentWriter;
-import com.aril.arilbatchsdk.core.item.kafka.KafkaItemIdempotentWriterBuilder;
-import com.aril.arilbatchsdk.core.item.support.IdempotentWriter;
 import com.aril.arilbatchsdk.core.listener.ChunkStepExecutionListener;
 import com.aril.arilbatchsdk.core.listener.IdempotentJobEventProcessorListener;
 import com.aril.arilbatchsdk.core.listener.JobExecutionStatusChangeListener;
@@ -141,12 +139,12 @@ public class ArilBatchFromExcelToKafkaConfig extends AbstractArilBatchConfig {
             @Qualifier(BeanIds.ARIL_KAFKA_TEMPLATE) ArilKafkaTemplate<String, D> arilKafkaTemplate,
             ArilIdempotentTemplate arilIdempotentTemplate,
             @Value("#{jobParameters[T(com.aril.arilbatchsdk.config.ArilBatchConfigConstants).INPUT_PARAM]}") BatchJobParameterWrapper<BatchExcelToKafkaJobParameter> inputParam) {
-        return new KafkaItemIdempotentWriterBuilder<D>()
-                .name(inputParam.getJobParameter().getJobName())
-                .topic(inputParam.getJobParameter().getTopic())
-                .idempotencyOptions(inputParam.getJobParameter().getIdempotencyOptions())
-                .idempotentWriter(new IdempotentWriter(arilIdempotentTemplate))
-                .kafkaTemplate(arilKafkaTemplate)
-                .build();
+        return configureKafkaItemIdempotentWriter(
+                inputParam.getJobParameter().getJobName(),
+                inputParam.getJobParameter().getTopic(),
+                inputParam.getJobParameter().getIdempotencyOptions(),
+                arilIdempotentTemplate,
+                arilKafkaTemplate
+        );
     }
 }

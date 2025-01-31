@@ -2,6 +2,7 @@
 
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
+import lombok.SneakyThrows;
 import org.springframework.batch.item.adapter.AbstractMethodInvokingDelegator;
 import org.springframework.batch.item.adapter.DynamicMethodInvocationException;
 import org.springframework.util.MethodInvoker;
@@ -13,45 +14,45 @@ import java.util.List;
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 public final class MethodInvokerUtils {
 
-    @SuppressWarnings(&quot;java:S112&quot;)
-    public static Object doInvoke(MethodInvoker invoker) throws Exception {
+<span class="nc" id="L17">    @SneakyThrows</span>
+    public static Object doInvoke(MethodInvoker invoker) {
         try {
-<span class="fc" id="L19">            invoker.prepare();</span>
-<span class="nc" id="L20">        } catch (ClassNotFoundException | NoSuchMethodException e) {</span>
-<span class="nc" id="L21">            throw new DynamicMethodInvocationException(e);</span>
-<span class="fc" id="L22">        }</span>
+<span class="fc" id="L20">            invoker.prepare();</span>
+<span class="nc" id="L21">        } catch (ClassNotFoundException | NoSuchMethodException e) {</span>
+<span class="nc" id="L22">            throw new DynamicMethodInvocationException(e);</span>
+<span class="fc" id="L23">        }</span>
 
         try {
-<span class="fc" id="L25">            return invoker.invoke();</span>
-<span class="nc" id="L26">        } catch (InvocationTargetException e) {</span>
-<span class="nc bnc" id="L27" title="All 2 branches missed.">            if (e.getCause() instanceof Exception exception) {</span>
-<span class="nc" id="L28">                throw (Exception) exception.getCause();</span>
+<span class="fc" id="L26">            return invoker.invoke();</span>
+<span class="nc" id="L27">        } catch (InvocationTargetException e) {</span>
+<span class="nc bnc" id="L28" title="All 2 branches missed.">            if (e.getCause() instanceof Exception exception) {</span>
+<span class="nc" id="L29">                throw (Exception) exception.getCause();</span>
             } else {
-<span class="nc" id="L30">                throw new AbstractMethodInvokingDelegator.InvocationTargetThrowableWrapper(e.getCause());</span>
+<span class="nc" id="L31">                throw new AbstractMethodInvokingDelegator.InvocationTargetThrowableWrapper(e.getCause());</span>
             }
-<span class="nc" id="L32">        } catch (IllegalAccessException e) {</span>
-<span class="nc" id="L33">            throw new DynamicMethodInvocationException(e);</span>
+<span class="nc" id="L33">        } catch (IllegalAccessException e) {</span>
+<span class="nc" id="L34">            throw new DynamicMethodInvocationException(e);</span>
         }
     }
 
     public static MethodInvoker createMethodInvoker(Object targetObject, String targetMethod) {
-<span class="fc" id="L38">        MethodInvoker invoker = new MethodInvoker();</span>
-<span class="fc" id="L39">        invoker.setTargetObject(targetObject);</span>
-<span class="fc" id="L40">        invoker.setTargetMethod(targetMethod);</span>
-<span class="fc" id="L41">        return invoker;</span>
+<span class="fc" id="L39">        MethodInvoker invoker = new MethodInvoker();</span>
+<span class="fc" id="L40">        invoker.setTargetObject(targetObject);</span>
+<span class="fc" id="L41">        invoker.setTargetMethod(targetMethod);</span>
+<span class="fc" id="L42">        return invoker;</span>
     }
 
     //First-of-all, send custom-args then send item.
     public static Object[] generateMethodArguments(Object item, List&lt;?&gt; arguments) {
-<span class="fc" id="L46">        List&lt;Object&gt; parameters = new ArrayList&lt;&gt;();</span>
+<span class="fc" id="L47">        List&lt;Object&gt; parameters = new ArrayList&lt;&gt;();</span>
 
-<span class="pc bpc" id="L48" title="1 of 4 branches missed.">        if (arguments != null &amp;&amp; !arguments.isEmpty()) {</span>
-<span class="fc" id="L49">            parameters.addAll(arguments);</span>
+<span class="pc bpc" id="L49" title="1 of 4 branches missed.">        if (arguments != null &amp;&amp; !arguments.isEmpty()) {</span>
+<span class="fc" id="L50">            parameters.addAll(arguments);</span>
         }
 
-<span class="fc" id="L52">        parameters.add(item);</span>
+<span class="fc" id="L53">        parameters.add(item);</span>
 
-<span class="fc" id="L54">        return parameters.toArray();</span>
+<span class="fc" id="L55">        return parameters.toArray();</span>
     }
 }
 </pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.11.202310140853</span></div></body></html>

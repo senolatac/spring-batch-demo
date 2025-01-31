@@ -75,7 +75,7 @@ public abstract class AbstractPagingServiceAndControllerReader<T> extends Abstra
 
     @Override
     protected void doOpen() throws Exception {
-
+        //default implementation is empty
     }
 
     @Override

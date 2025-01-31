@@ -3,10 +3,7 @@ package com.aril.arilbatchsdk.config.job;
 import com.aril.arilbatchsdk.config.ArilBatchConfigConstants;
 import com.aril.arilbatchsdk.config.ArilBatchProperties;
 import com.aril.arilbatchsdk.core.BatchType;
-import com.aril.arilbatchsdk.core.item.service.IdempotentService;
 import com.aril.arilbatchsdk.core.item.service.writer.ServiceItemIdempotentWriter;
-import com.aril.arilbatchsdk.core.item.service.writer.ServiceItemIdempotentWriterBuilder;
-import com.aril.arilbatchsdk.core.item.support.IdempotentWriter;
 import com.aril.arilbatchsdk.core.listener.ChunkStepExecutionListener;
 import com.aril.arilbatchsdk.core.listener.JobExecutionStatusChangeListener;
 import com.aril.arilbatchsdk.core.parameter.BatchCsvToServiceJobParameter;
@@ -110,20 +107,15 @@ public class ArilBatchFromCsvToServiceConfig extends AbstractArilBatchConfig {
 
     @Bean
     @StepScope
-    @SuppressWarnings("unchecked")
     public <D extends IdempotentBatchItem> ServiceItemIdempotentWriter<D> writerForCsvToServiceJob(
             ArilIdempotentTemplate arilIdempotentTemplate,
             @Value("#{jobParameters[T(com.aril.arilbatchsdk.config.ArilBatchConfigConstants).INPUT_PARAM]}") BatchJobParameterWrapper<BatchCsvToServiceJobParameter> inputParam) {
-        BatchCsvToServiceJobParameter jobParameter = inputParam.getJobParameter();
-
-        return new ServiceItemIdempotentWriterBuilder<D>()
-                .name(jobParameter.getJobName())
-                .service((IdempotentService<D>) jobParameter.getServiceItemWriter().getService())
-                .methodName(jobParameter.getServiceItemWriter().getMethodName())
-                .arguments(jobParameter.getServiceItemWriter().getArguments())
-                .idempotencyOptions(jobParameter.getIdempotencyOptions())
-                .idempotentWriter(new IdempotentWriter(arilIdempotentTemplate))
-                .build();
+        return configureServiceItemIdempotentWriter(
+                inputParam.getJobParameter().getJobName(),
+                inputParam.getJobParameter().getServiceItemWriter(),
+                inputParam.getJobParameter().getIdempotencyOptions(),
+                arilIdempotentTemplate
+        );
     }
 }
 

@@ -4,9 +4,7 @@ import com.aril.arilbatchsdk.config.ArilBatchConfigConstants;
 import com.aril.arilbatchsdk.config.ArilBatchProperties;
 import com.aril.arilbatchsdk.core.BatchType;
 import com.aril.arilbatchsdk.core.item.data.RepositoryItemIdempotentWriter;
-import com.aril.arilbatchsdk.core.item.data.RepositoryItemIdempotentWriterBuilder;
 import com.aril.arilbatchsdk.core.item.service.reader.ServiceItemReader;
-import com.aril.arilbatchsdk.core.item.support.IdempotentWriter;
 import com.aril.arilbatchsdk.core.listener.ChunkStepExecutionListener;
 import com.aril.arilbatchsdk.core.listener.JobExecutionStatusChangeListener;
 import com.aril.arilbatchsdk.core.parameter.BatchServiceToDbJobParameter;
@@ -31,7 +29,6 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Lazy;
-import org.springframework.data.repository.CrudRepository;
 import org.springframework.retry.policy.NeverRetryPolicy;
 import org.springframework.transaction.PlatformTransactionManager;
 
@@ -39,7 +36,7 @@ import org.springframework.transaction.PlatformTransactionManager;
 @Configuration
 @EnableArilIdempotent
 @ConditionalOnClass({ArilIdempotentTemplate.class})
-public class ArilBatchFromServiceToDbConfig {
+public class ArilBatchFromServiceToDbConfig extends AbstractArilBatchConfig {
 
     public static final String READER_NAME = "readerForServiceToDbJob";
     private static final String CHUNK_STEP_NAME = "chunkStepForServiceToDbJob";
@@ -108,19 +105,14 @@ public class ArilBatchFromServiceToDbConfig {
 
     @Bean
     @StepScope
-    @SuppressWarnings("unchecked")
     public <D extends IdempotentBatchItem> RepositoryItemIdempotentWriter<D> writerForServiceToDbJob(
             ArilIdempotentTemplate arilIdempotentTemplate,
             @Value("#{jobParameters[T(com.aril.arilbatchsdk.config.ArilBatchConfigConstants).INPUT_PARAM]}") BatchJobParameterWrapper<BatchServiceToDbJobParameter> inputParam) {
-        BatchServiceToDbJobParameter jobParameter = inputParam.getJobParameter();
-
-        return new RepositoryItemIdempotentWriterBuilder<D>()
-                .name(jobParameter.getJobName())
-                .repository((CrudRepository<D, ?>) jobParameter.getRepositoryItemWriter().getRepository())
-                .methodName(jobParameter.getRepositoryItemWriter().getMethodName())
-                .arguments(jobParameter.getRepositoryItemWriter().getArguments())
-                .idempotencyOptions(jobParameter.getIdempotencyOptions())
-                .idempotentWriter(new IdempotentWriter(arilIdempotentTemplate))
-                .build();
+        return configureRepositoryItemIdempotentWriter(
+                inputParam.getJobParameter().getJobName(),
+                inputParam.getJobParameter().getRepositoryItemWriter(),
+                inputParam.getJobParameter().getIdempotencyOptions(),
+                arilIdempotentTemplate
+        );
     }
 }

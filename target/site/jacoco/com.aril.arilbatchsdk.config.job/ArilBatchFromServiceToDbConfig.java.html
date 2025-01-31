@@ -4,9 +4,7 @@ import com.aril.arilbatchsdk.config.ArilBatchConfigConstants;
 import com.aril.arilbatchsdk.config.ArilBatchProperties;
 import com.aril.arilbatchsdk.core.BatchType;
 import com.aril.arilbatchsdk.core.item.data.RepositoryItemIdempotentWriter;
-import com.aril.arilbatchsdk.core.item.data.RepositoryItemIdempotentWriterBuilder;
 import com.aril.arilbatchsdk.core.item.service.reader.ServiceItemReader;
-import com.aril.arilbatchsdk.core.item.support.IdempotentWriter;
 import com.aril.arilbatchsdk.core.listener.ChunkStepExecutionListener;
 import com.aril.arilbatchsdk.core.listener.JobExecutionStatusChangeListener;
 import com.aril.arilbatchsdk.core.parameter.BatchServiceToDbJobParameter;
@@ -31,7 +29,6 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Lazy;
-import org.springframework.data.repository.CrudRepository;
 import org.springframework.retry.policy.NeverRetryPolicy;
 import org.springframework.transaction.PlatformTransactionManager;
 
@@ -39,7 +36,7 @@ import org.springframework.transaction.PlatformTransactionManager;
 @Configuration
 @EnableArilIdempotent
 @ConditionalOnClass({ArilIdempotentTemplate.class})
-<span class="fc" id="L42">public class ArilBatchFromServiceToDbConfig {</span>
+<span class="fc" id="L39">public class ArilBatchFromServiceToDbConfig extends AbstractArilBatchConfig {</span>
 
     public static final String READER_NAME = &quot;readerForServiceToDbJob&quot;;
     private static final String CHUNK_STEP_NAME = &quot;chunkStepForServiceToDbJob&quot;;
@@ -49,11 +46,11 @@ import org.springframework.transaction.PlatformTransactionManager;
     public Job jobForServiceToDbJob(JobRepository jobRepository,
                                     Step chunkStepForServiceToDbJob,
                                     JobExecutionStatusChangeListener jobExecutionStatusChangeListenerForServiceToDbJob) {
-<span class="fc" id="L52">        return new JobBuilder(JOB_NAME, jobRepository)</span>
-<span class="fc" id="L53">                .incrementer(new RunIdIncrementer())</span>
-<span class="fc" id="L54">                .start(chunkStepForServiceToDbJob)</span>
-<span class="fc" id="L55">                .listener(jobExecutionStatusChangeListenerForServiceToDbJob)</span>
-<span class="fc" id="L56">                .build();</span>
+<span class="fc" id="L49">        return new JobBuilder(JOB_NAME, jobRepository)</span>
+<span class="fc" id="L50">                .incrementer(new RunIdIncrementer())</span>
+<span class="fc" id="L51">                .start(chunkStepForServiceToDbJob)</span>
+<span class="fc" id="L52">                .listener(jobExecutionStatusChangeListenerForServiceToDbJob)</span>
+<span class="fc" id="L53">                .build();</span>
     }
 
     @Bean
@@ -61,7 +58,7 @@ import org.springframework.transaction.PlatformTransactionManager;
     public JobExecutionStatusChangeListener jobExecutionStatusChangeListenerForServiceToDbJob(
             @Value(&quot;#{jobParameters[T(com.aril.arilbatchsdk.config.ArilBatchConfigConstants).INPUT_PARAM]}&quot;) BatchJobParameterWrapper&lt;BatchServiceToDbJobParameter&gt; inputParam
     ) {
-<span class="fc" id="L64">        return new JobExecutionStatusChangeListener(inputParam.getJobParameter().getJobExecutionChangeSubscriber());</span>
+<span class="fc" id="L61">        return new JobExecutionStatusChangeListener(inputParam.getJobParameter().getJobExecutionChangeSubscriber());</span>
     }
 
     @Bean
@@ -73,18 +70,18 @@ import org.springframework.transaction.PlatformTransactionManager;
                                                                            BatchJobSummaryService arilBatchJobSummaryService,
                                                                            RepositoryItemIdempotentWriter&lt;D&gt; writerForServiceToDbJob,
                                                                            @Value(&quot;#{jobParameters[T(com.aril.arilbatchsdk.config.ArilBatchConfigConstants).INPUT_PARAM]}&quot;) BatchJobParameterWrapper&lt;BatchServiceToDbJobParameter&gt; inputParam) {
-<span class="fc" id="L76">        return new StepBuilder(CHUNK_STEP_NAME, jobRepository)</span>
-<span class="fc" id="L77">                .&lt;IdempotentBatchItem, D&gt;chunk(inputParam.getJobParameter().getChunkSize(), transactionManager)</span>
-<span class="fc" id="L78">                .reader(readerForServiceToDbJob(inputParam))</span>
-<span class="fc" id="L79">                .processor((ItemProcessor&lt;? super IdempotentBatchItem, ? extends D&gt;) processorForServiceToDbJob(inputParam))</span>
-<span class="fc" id="L80">                .writer(writerForServiceToDbJob)</span>
-<span class="fc" id="L81">                .listener(new ChunkStepExecutionListener(BatchType.SERVICE_TO_DB, arilBatchProperties.getActiveModule(), inputParam.getJobParameter(), arilBatchJobSummaryService))</span>
-<span class="fc" id="L82">                .faultTolerant()</span>
-<span class="fc" id="L83">                .skip(ArilIdempotentException.class)</span>
-<span class="fc" id="L84">                .skipPolicy(new IdempotentSkipPolicy())</span>
-<span class="fc" id="L85">                .retryPolicy(new NeverRetryPolicy())</span>
-<span class="fc" id="L86">                .processorNonTransactional()</span>
-<span class="fc" id="L87">                .build();</span>
+<span class="fc" id="L73">        return new StepBuilder(CHUNK_STEP_NAME, jobRepository)</span>
+<span class="fc" id="L74">                .&lt;IdempotentBatchItem, D&gt;chunk(inputParam.getJobParameter().getChunkSize(), transactionManager)</span>
+<span class="fc" id="L75">                .reader(readerForServiceToDbJob(inputParam))</span>
+<span class="fc" id="L76">                .processor((ItemProcessor&lt;? super IdempotentBatchItem, ? extends D&gt;) processorForServiceToDbJob(inputParam))</span>
+<span class="fc" id="L77">                .writer(writerForServiceToDbJob)</span>
+<span class="fc" id="L78">                .listener(new ChunkStepExecutionListener(BatchType.SERVICE_TO_DB, arilBatchProperties.getActiveModule(), inputParam.getJobParameter(), arilBatchJobSummaryService))</span>
+<span class="fc" id="L79">                .faultTolerant()</span>
+<span class="fc" id="L80">                .skip(ArilIdempotentException.class)</span>
+<span class="fc" id="L81">                .skipPolicy(new IdempotentSkipPolicy())</span>
+<span class="fc" id="L82">                .retryPolicy(new NeverRetryPolicy())</span>
+<span class="fc" id="L83">                .processorNonTransactional()</span>
+<span class="fc" id="L84">                .build();</span>
     }
 
     @Bean
@@ -92,7 +89,7 @@ import org.springframework.transaction.PlatformTransactionManager;
     @SuppressWarnings(&quot;unchecked&quot;)
     public &lt;T extends IdempotentBatchItem&gt; ServiceItemReader&lt;T&gt; readerForServiceToDbJob(
             @Value(&quot;#{jobParameters[T(com.aril.arilbatchsdk.config.ArilBatchConfigConstants).INPUT_PARAM]}&quot;) BatchJobParameterWrapper&lt;BatchServiceToDbJobParameter&gt; inputParam) {
-<span class="fc" id="L95">        return (ServiceItemReader&lt;T&gt;) inputParam.getJobParameter().getServiceItemReader();</span>
+<span class="fc" id="L92">        return (ServiceItemReader&lt;T&gt;) inputParam.getJobParameter().getServiceItemReader();</span>
     }
 
     @Bean
@@ -100,28 +97,23 @@ import org.springframework.transaction.PlatformTransactionManager;
     @SuppressWarnings(&quot;unchecked&quot;)
     public &lt;T extends IdempotentBatchItem&gt; ItemProcessor&lt;T, T&gt; processorForServiceToDbJob(
             @Value(&quot;#{jobParameters[T(com.aril.arilbatchsdk.config.ArilBatchConfigConstants).INPUT_PARAM]}&quot;) BatchJobParameterWrapper&lt;BatchServiceToDbJobParameter&gt; inputParam) {
-<span class="pc bpc" id="L103" title="1 of 2 branches missed.">        if (inputParam.getJobParameter().getItemProcessor() != null) {</span>
-<span class="nc" id="L104">            return (ItemProcessor&lt;T, T&gt;) inputParam.getJobParameter().getItemProcessor();</span>
+<span class="pc bpc" id="L100" title="1 of 2 branches missed.">        if (inputParam.getJobParameter().getItemProcessor() != null) {</span>
+<span class="nc" id="L101">            return (ItemProcessor&lt;T, T&gt;) inputParam.getJobParameter().getItemProcessor();</span>
         }
-<span class="fc" id="L106">        return item -&gt; item;</span>
+<span class="fc" id="L103">        return item -&gt; item;</span>
     }
 
     @Bean
     @StepScope
-    @SuppressWarnings(&quot;unchecked&quot;)
     public &lt;D extends IdempotentBatchItem&gt; RepositoryItemIdempotentWriter&lt;D&gt; writerForServiceToDbJob(
             ArilIdempotentTemplate arilIdempotentTemplate,
             @Value(&quot;#{jobParameters[T(com.aril.arilbatchsdk.config.ArilBatchConfigConstants).INPUT_PARAM]}&quot;) BatchJobParameterWrapper&lt;BatchServiceToDbJobParameter&gt; inputParam) {
-<span class="fc" id="L115">        BatchServiceToDbJobParameter jobParameter = inputParam.getJobParameter();</span>
-
-<span class="fc" id="L117">        return new RepositoryItemIdempotentWriterBuilder&lt;D&gt;()</span>
-<span class="fc" id="L118">                .name(jobParameter.getJobName())</span>
-<span class="fc" id="L119">                .repository((CrudRepository&lt;D, ?&gt;) jobParameter.getRepositoryItemWriter().getRepository())</span>
-<span class="fc" id="L120">                .methodName(jobParameter.getRepositoryItemWriter().getMethodName())</span>
-<span class="fc" id="L121">                .arguments(jobParameter.getRepositoryItemWriter().getArguments())</span>
-<span class="fc" id="L122">                .idempotencyOptions(jobParameter.getIdempotencyOptions())</span>
-<span class="fc" id="L123">                .idempotentWriter(new IdempotentWriter(arilIdempotentTemplate))</span>
-<span class="fc" id="L124">                .build();</span>
+<span class="fc" id="L111">        return configureRepositoryItemIdempotentWriter(</span>
+<span class="fc" id="L112">                inputParam.getJobParameter().getJobName(),</span>
+<span class="fc" id="L113">                inputParam.getJobParameter().getRepositoryItemWriter(),</span>
+<span class="fc" id="L114">                inputParam.getJobParameter().getIdempotencyOptions(),</span>
+                arilIdempotentTemplate
+        );
     }
 }
 </pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.11.202310140853</span></div></body></html>

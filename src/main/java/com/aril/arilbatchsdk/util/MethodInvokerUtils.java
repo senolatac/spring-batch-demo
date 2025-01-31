@@ -2,6 +2,7 @@ package com.aril.arilbatchsdk.util;
 
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
+import lombok.SneakyThrows;
 import org.springframework.batch.item.adapter.AbstractMethodInvokingDelegator;
 import org.springframework.batch.item.adapter.DynamicMethodInvocationException;
 import org.springframework.util.MethodInvoker;
@@ -13,8 +14,8 @@ import java.util.List;
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 public final class MethodInvokerUtils {
 
-    @SuppressWarnings("java:S112")
-    public static Object doInvoke(MethodInvoker invoker) throws Exception {
+    @SneakyThrows
+    public static Object doInvoke(MethodInvoker invoker) {
         try {
             invoker.prepare();
         } catch (ClassNotFoundException | NoSuchMethodException e) {
