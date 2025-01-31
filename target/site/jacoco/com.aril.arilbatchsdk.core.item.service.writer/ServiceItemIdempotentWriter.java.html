@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>ServiceItemIdempotentWriter.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">aril-batch-sdk</a> &gt; <a href="index.source.html" class="el_package">com.aril.arilbatchsdk.core.item.service.writer</a> &gt; <span class="el_source">ServiceItemIdempotentWriter.java</span></div><h1>ServiceItemIdempotentWriter.java</h1><pre class="source lang-java linenums">package com.aril.arilbatchsdk.core.item.service.writer;
+
+import com.aril.arilbatchsdk.core.item.AbstractItemIdempotentWriter;
+import com.aril.arilbatchsdk.core.item.service.IdempotentService;
+import com.aril.arilbatchsdk.util.MethodInvokerUtils;
+import com.aril.valhala.batch.IdempotentBatchItem;
+import lombok.Setter;
+import org.springframework.beans.factory.InitializingBean;
+import org.springframework.util.Assert;
+import org.springframework.util.ClassUtils;
+import org.springframework.util.MethodInvoker;
+import org.springframework.util.StringUtils;
+
+import java.util.List;
+
+<span class="fc" id="L16">@Setter</span>
+public class ServiceItemIdempotentWriter&lt;T extends IdempotentBatchItem&gt; extends AbstractItemIdempotentWriter&lt;T, Void&gt; implements InitializingBean {
+    private IdempotentService&lt;T&gt; service;
+    private String methodName;
+    private List&lt;?&gt; arguments;
+
+<span class="fc" id="L22">    public ServiceItemIdempotentWriter() {</span>
+<span class="fc" id="L23">        setName(ClassUtils.getShortName(ServiceItemIdempotentWriter.class));</span>
+<span class="fc" id="L24">    }</span>
+
+    /**
+     * Check mandatory properties - there must be a service.
+     */
+    @Override
+    public void afterPropertiesSet() throws Exception {
+<span class="fc" id="L31">        initIdempotencyOptions();</span>
+<span class="fc bfc" id="L32" title="All 2 branches covered.">        if (idempotencyOptions.isEnable()) {</span>
+<span class="fc" id="L33">            Assert.notNull(idempotentWriter, &quot;The idempotent-writer must be set&quot;);</span>
+        }
+<span class="fc" id="L35">        Assert.notNull(name, &quot;The name must be set&quot;);</span>
+<span class="pc bpc" id="L36" title="1 of 2 branches missed.">        Assert.state(service != null, &quot;A IdempotentService implementation is required&quot;);</span>
+<span class="fc" id="L37">        Assert.state(StringUtils.hasText(this.methodName), &quot;methodName must not be empty.&quot;);</span>
+<span class="fc" id="L38">    }</span>
+
+    /**
+     * Performs the actual write to the service. This can be overridden by a subclass
+     * if necessary.
+     *
+     * @param item the item to be persisted.
+     * @throws Exception thrown if error occurs during writing.
+     */
+    @Override
+    protected Void doWrite(T item) throws Exception {
+<span class="fc" id="L49">        MethodInvoker invoker = MethodInvokerUtils.createMethodInvoker(service, methodName);</span>
+<span class="fc" id="L50">        invoker.setArguments(MethodInvokerUtils.generateMethodArguments(item, arguments));</span>
+<span class="fc" id="L51">        MethodInvokerUtils.doInvoke(invoker);</span>
+<span class="fc" id="L52">        return null;</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.11.202310140853</span></div></body></html>

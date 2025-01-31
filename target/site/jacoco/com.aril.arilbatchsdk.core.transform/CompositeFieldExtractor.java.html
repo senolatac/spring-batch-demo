@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>CompositeFieldExtractor.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">aril-batch-sdk</a> &gt; <a href="index.source.html" class="el_package">com.aril.arilbatchsdk.core.transform</a> &gt; <span class="el_source">CompositeFieldExtractor.java</span></div><h1>CompositeFieldExtractor.java</h1><pre class="source lang-java linenums">package com.aril.arilbatchsdk.core.transform;
+
+import lombok.RequiredArgsConstructor;
+import org.springframework.batch.item.file.transform.BeanWrapperFieldExtractor;
+import org.springframework.batch.item.file.transform.FieldExtractor;
+
+import java.util.Map;
+
+<span class="fc" id="L9">@RequiredArgsConstructor</span>
+public class CompositeFieldExtractor&lt;T&gt; implements FieldExtractor&lt;T&gt; {
+    private final String[] names;
+    private FieldExtractor&lt;T&gt; fieldExtractor;
+
+    @Override
+    public Object[] extract(T item) {
+<span class="fc" id="L16">        return findFieldExtractor(item).extract(item);</span>
+    }
+
+    private FieldExtractor&lt;T&gt; findFieldExtractor(T item) {
+<span class="fc bfc" id="L20" title="All 2 branches covered.">        if (this.fieldExtractor != null) {</span>
+<span class="fc" id="L21">            return this.fieldExtractor;</span>
+        }
+
+<span class="fc bfc" id="L24" title="All 2 branches covered.">        if (item instanceof Map&lt;?, ?&gt;) {</span>
+<span class="fc" id="L25">            this.fieldExtractor = new MapFieldExtractor&lt;&gt;(names);</span>
+        } else {
+<span class="fc" id="L27">            BeanWrapperFieldExtractor&lt;T&gt; beanWrapperFieldExtractor = new BeanWrapperFieldExtractor&lt;&gt;();</span>
+<span class="fc" id="L28">            beanWrapperFieldExtractor.setNames(names);</span>
+<span class="fc" id="L29">            beanWrapperFieldExtractor.afterPropertiesSet();</span>
+<span class="fc" id="L30">            this.fieldExtractor = beanWrapperFieldExtractor;</span>
+        }
+<span class="fc" id="L32">        return this.fieldExtractor;</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.11.202310140853</span></div></body></html>

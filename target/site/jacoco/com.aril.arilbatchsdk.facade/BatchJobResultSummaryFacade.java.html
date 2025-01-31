@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>BatchJobResultSummaryFacade.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">aril-batch-sdk</a> &gt; <a href="index.source.html" class="el_package">com.aril.arilbatchsdk.facade</a> &gt; <span class="el_source">BatchJobResultSummaryFacade.java</span></div><h1>BatchJobResultSummaryFacade.java</h1><pre class="source lang-java linenums">package com.aril.arilbatchsdk.facade;
+
+import com.aril.arilbatchsdk.entity.BatchJobResultSummary;
+import com.aril.arilbatchsdk.entity.BatchJobSummary;
+import com.aril.arilbatchsdk.service.BatchJobItemResultService;
+import com.aril.arilbatchsdk.service.BatchJobResultSummaryService;
+import com.aril.arilbatchsdk.service.BatchJobSummaryService;
+import lombok.RequiredArgsConstructor;
+import org.springframework.batch.core.BatchStatus;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.util.Map;
+
+@Service
+<span class="fc" id="L20">@RequiredArgsConstructor</span>
+@ConditionalOnClass({JpaRepository.class})
+public class BatchJobResultSummaryFacade {
+    private final BatchJobResultSummaryService batchJobResultSummaryService;
+    private final BatchJobSummaryService batchJobSummaryService;
+    private final BatchJobItemResultService batchJobItemResultService;
+
+    public BatchJobResultSummary getByJobInstanceId(Long jobId) {
+<span class="fc" id="L28">        return batchJobResultSummaryService.getByJobInstanceId(jobId);</span>
+    }
+
+    public Page&lt;BatchJobResultSummary&gt; getAll(Pageable pageable) {
+<span class="fc" id="L32">        return batchJobResultSummaryService.findAll(pageable);</span>
+    }
+
+    @Transactional
+    public void summarizeItemResults(Long jobId) {
+<span class="fc" id="L37">        BatchJobSummary jobSummary = batchJobSummaryService.getById(jobId);</span>
+<span class="fc" id="L38">        Map&lt;BatchStatus, Long&gt; statusMap = batchJobItemResultService.countByStatus(jobId);</span>
+
+<span class="fc" id="L40">        batchJobResultSummaryService.saveItemResults(jobSummary, jobId, statusMap);</span>
+<span class="fc" id="L41">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.11.202310140853</span></div></body></html>

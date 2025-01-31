@@ -1,0 +1,174 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>ArilBatchFromDbToCsvConfig.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">aril-batch-sdk</a> &gt; <a href="index.source.html" class="el_package">com.aril.arilbatchsdk.config.job</a> &gt; <span class="el_source">ArilBatchFromDbToCsvConfig.java</span></div><h1>ArilBatchFromDbToCsvConfig.java</h1><pre class="source lang-java linenums">package com.aril.arilbatchsdk.config.job;
+
+import com.aril.arilbatchsdk.config.ArilBatchConfigConstants;
+import com.aril.arilbatchsdk.config.ArilBatchProperties;
+import com.aril.arilbatchsdk.core.BatchType;
+import com.aril.arilbatchsdk.core.FileUploader;
+import com.aril.arilbatchsdk.core.listener.ChunkStepExecutionListener;
+import com.aril.arilbatchsdk.core.listener.JobExecutionStatusChangeListener;
+import com.aril.arilbatchsdk.core.parameter.BatchDbToCsvJobParameter;
+import com.aril.arilbatchsdk.core.parameter.support.BatchJobParameterWrapper;
+import com.aril.arilbatchsdk.core.parameter.support.RepositoryItemReaderParameter;
+import com.aril.arilbatchsdk.core.tasklet.export.ExportMetadataTasklet;
+import com.aril.arilbatchsdk.core.tasklet.file.CsvFileUploaderTasklet;
+import com.aril.arilbatchsdk.core.tasklet.file.LocalFileDeleteTasklet;
+import com.aril.arilbatchsdk.service.BatchJobSummaryService;
+import com.aril.arilbatchsdk.util.JobUtils;
+import com.aril.valhala.batch.BatchItem;
+import org.springframework.batch.core.Job;
+import org.springframework.batch.core.Step;
+import org.springframework.batch.core.configuration.annotation.JobScope;
+import org.springframework.batch.core.configuration.annotation.StepScope;
+import org.springframework.batch.core.job.builder.JobBuilder;
+import org.springframework.batch.core.launch.support.RunIdIncrementer;
+import org.springframework.batch.core.repository.JobRepository;
+import org.springframework.batch.core.step.builder.StepBuilder;
+import org.springframework.batch.item.ItemProcessor;
+import org.springframework.batch.item.data.RepositoryItemReader;
+import org.springframework.batch.item.data.builder.RepositoryItemReaderBuilder;
+import org.springframework.batch.item.file.FlatFileItemWriter;
+import org.springframework.batch.item.file.builder.FlatFileItemWriterBuilder;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Lazy;
+import org.springframework.core.io.FileSystemResource;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.transaction.PlatformTransactionManager;
+
+@Lazy
+@Configuration
+@ConditionalOnClass(JpaRepository.class)
+<span class="fc" id="L43">public class ArilBatchFromDbToCsvConfig extends AbstractArilBatchConfig {</span>
+
+    public static final String READER_NAME = &quot;readerForDbToCsvJob&quot;;
+    private static final String WRITER_NAME = &quot;writerForDbToCsvJob&quot;;
+    private static final String CHUNK_STEP_NAME = &quot;chunkStepForDbToCsvJob&quot;;
+    private static final String LOG_STEP_NAME = &quot;logStepForDbToCsvJob&quot;;
+    private static final String FILE_UPLOADER_STEP_NAME = &quot;fileUploaderStepForDbToCsvJob&quot;;
+    private static final String TMP_FILE_DELETE_STEP_NAME = &quot;tmpFileDeleteStepForDbToCsvJob&quot;;
+    private static final String JOB_NAME = &quot;jobForDbToCsvJob&quot;;
+
+    @Bean(ArilBatchConfigConstants.JOB_FOR_DB_TO_CSV)
+    public Job jobForDbToCsv(JobRepository jobRepository,
+                             Step chunkStepForDbToCsvJob,
+                             Step logStepForDbToCsvJob,
+                             Step uploaderStepForDbToCsvJob,
+                             Step tmpFileDeleteStepForDbToCsvJob,
+                             JobExecutionStatusChangeListener jobExecutionStatusChangeListenerForDbToCsvJob) {
+<span class="fc" id="L60">        return new JobBuilder(JOB_NAME, jobRepository)</span>
+<span class="fc" id="L61">                .incrementer(new RunIdIncrementer())</span>
+<span class="fc" id="L62">                .start(chunkStepForDbToCsvJob)</span>
+<span class="fc" id="L63">                .next(logStepForDbToCsvJob)</span>
+<span class="fc" id="L64">                .next(uploaderStepForDbToCsvJob)</span>
+<span class="fc" id="L65">                .next(tmpFileDeleteStepForDbToCsvJob)</span>
+<span class="fc" id="L66">                .listener(jobExecutionStatusChangeListenerForDbToCsvJob)</span>
+<span class="fc" id="L67">                .build();</span>
+    }
+
+    @Bean
+    @JobScope
+    public JobExecutionStatusChangeListener jobExecutionStatusChangeListenerForDbToCsvJob(
+            @Value(&quot;#{jobParameters[T(com.aril.arilbatchsdk.config.ArilBatchConfigConstants).INPUT_PARAM]}&quot;) BatchJobParameterWrapper&lt;BatchDbToCsvJobParameter&gt; inputParam
+    ) {
+<span class="fc" id="L75">        return new JobExecutionStatusChangeListener(inputParam.getJobParameter().getJobExecutionChangeSubscriber());</span>
+    }
+
+    @Bean
+    @JobScope
+    public Step uploaderStepForDbToCsvJob(JobRepository jobRepository,
+                                          FileUploader fileUploader,
+                                          PlatformTransactionManager transactionManager,
+                                          @Value(&quot;#{jobParameters[T(com.aril.arilbatchsdk.config.ArilBatchConfigConstants).INPUT_PARAM]}&quot;) BatchJobParameterWrapper&lt;BatchDbToCsvJobParameter&gt; inputParam,
+                                          @Value(&quot;#{jobParameters[T(com.aril.arilbatchsdk.config.ArilBatchConfigConstants).INPUT_PARAM_IDENTIFIER]}&quot;) String identifier,
+                                          @Value(&quot;#{jobParameters[T(com.aril.arilbatchsdk.config.ArilBatchConfigConstants).JOB_EXPORT_FOLDER]}&quot;) String exportFolder) {
+<span class="fc" id="L86">        return new StepBuilder(FILE_UPLOADER_STEP_NAME, jobRepository)</span>
+<span class="fc" id="L87">                .tasklet(new CsvFileUploaderTasklet(fileUploader, inputParam.getJobParameter().getExportBucket(), exportFolder, JobUtils.getCsvFilenameById(identifier)), transactionManager)</span>
+<span class="fc" id="L88">                .build();</span>
+    }
+
+    @Bean
+    @JobScope
+    public Step tmpFileDeleteStepForDbToCsvJob(JobRepository jobRepository,
+                                               PlatformTransactionManager transactionManager,
+                                               @Value(&quot;#{jobParameters[T(com.aril.arilbatchsdk.config.ArilBatchConfigConstants).INPUT_PARAM_IDENTIFIER]}&quot;) String identifier) {
+<span class="fc" id="L96">        return new StepBuilder(TMP_FILE_DELETE_STEP_NAME, jobRepository)</span>
+<span class="fc" id="L97">                .tasklet(new LocalFileDeleteTasklet(JobUtils.getCsvFilenameById(identifier)), transactionManager)</span>
+<span class="fc" id="L98">                .build();</span>
+    }
+
+    @Bean
+    @JobScope
+    public Step logStepForDbToCsvJob(JobRepository jobRepository,
+                                     FileUploader fileUploaderAdapter,
+                                     BatchJobSummaryService arilBatchJobSummaryService,
+                                     PlatformTransactionManager transactionManager,
+                                     @Value(&quot;#{jobParameters[T(com.aril.arilbatchsdk.config.ArilBatchConfigConstants).INPUT_PARAM]}&quot;) BatchJobParameterWrapper&lt;BatchDbToCsvJobParameter&gt; inputParam,
+                                     @Value(&quot;#{jobParameters[T(com.aril.arilbatchsdk.config.ArilBatchConfigConstants).INPUT_PARAM_IDENTIFIER]}&quot;) String identifier,
+                                     @Value(&quot;#{jobParameters[T(com.aril.arilbatchsdk.config.ArilBatchConfigConstants).JOB_EXPORT_FOLDER]}&quot;) String exportFolder) {
+<span class="fc" id="L110">        return new StepBuilder(LOG_STEP_NAME, jobRepository)</span>
+<span class="fc" id="L111">                .tasklet(new ExportMetadataTasklet(fileUploaderAdapter, arilBatchJobSummaryService, exportFolder, JobUtils.getCsvFilenameById(identifier), inputParam.getJobParameter().getExportBucket()), transactionManager)</span>
+<span class="fc" id="L112">                .build();</span>
+    }
+
+    @Bean
+    @JobScope
+    @SuppressWarnings(&quot;unchecked&quot;)
+    public &lt;D extends BatchItem&gt; Step chunkStepForDbToCsvJob(JobRepository jobRepository,
+                                                             ArilBatchProperties arilBatchProperties,
+                                                             PlatformTransactionManager transactionManager,
+                                                             BatchJobSummaryService arilBatchJobSummaryService,
+                                                             @Value(&quot;#{jobParameters[T(com.aril.arilbatchsdk.config.ArilBatchConfigConstants).INPUT_PARAM]}&quot;) BatchJobParameterWrapper&lt;BatchDbToCsvJobParameter&gt; inputParam,
+                                                             @Value(&quot;#{jobParameters[T(com.aril.arilbatchsdk.config.ArilBatchConfigConstants).INPUT_PARAM_IDENTIFIER]}&quot;) String identifier) {
+<span class="fc" id="L124">        return new StepBuilder(CHUNK_STEP_NAME, jobRepository)</span>
+<span class="fc" id="L125">                .&lt;BatchItem, D&gt;chunk(inputParam.getJobParameter().getChunkSize(), transactionManager)</span>
+<span class="fc" id="L126">                .reader(readerForDbToCsvJob(inputParam))</span>
+<span class="fc" id="L127">                .processor((ItemProcessor&lt;? super BatchItem, ? extends D&gt;) processorForDbToCsvJob(inputParam))</span>
+<span class="fc" id="L128">                .writer(writerForDbToCsvJob(inputParam, identifier))</span>
+<span class="fc" id="L129">                .listener(new ChunkStepExecutionListener(BatchType.DB_TO_CSV, arilBatchProperties.getActiveModule(), inputParam.getJobParameter(), arilBatchJobSummaryService))</span>
+<span class="fc" id="L130">                .readerIsTransactionalQueue()//to create a reader that does not buffer items in Java</span>
+<span class="fc" id="L131">                .build();</span>
+    }
+
+    @Bean
+    @StepScope
+    public &lt;T extends BatchItem&gt; RepositoryItemReader&lt;T&gt; readerForDbToCsvJob(
+            @Value(&quot;#{jobParameters[T(com.aril.arilbatchsdk.config.ArilBatchConfigConstants).INPUT_PARAM]}&quot;) BatchJobParameterWrapper&lt;BatchDbToCsvJobParameter&gt; inputParam) {
+<span class="fc" id="L138">        RepositoryItemReaderParameter repositoryItemReader = inputParam.getJobParameter().getRepositoryItemReader();</span>
+
+<span class="fc" id="L140">        return new RepositoryItemReaderBuilder&lt;T&gt;()</span>
+<span class="fc" id="L141">                .name(READER_NAME)</span>
+<span class="fc" id="L142">                .repository(repositoryItemReader.getRepository())</span>
+<span class="fc" id="L143">                .methodName(repositoryItemReader.getMethodName())</span>
+<span class="fc" id="L144">                .pageSize(inputParam.getJobParameter().getChunkSize())</span>
+<span class="fc" id="L145">                .arguments(repositoryItemReader.getArguments())</span>
+<span class="fc" id="L146">                .sorts(repositoryItemReader.getSorts())</span>
+<span class="fc" id="L147">                .build();</span>
+    }
+
+    @Bean
+    @StepScope
+    @SuppressWarnings(&quot;unchecked&quot;)
+    public &lt;T extends BatchItem&gt; ItemProcessor&lt;T, T&gt; processorForDbToCsvJob(
+            @Value(&quot;#{jobParameters[T(com.aril.arilbatchsdk.config.ArilBatchConfigConstants).INPUT_PARAM]}&quot;) BatchJobParameterWrapper&lt;BatchDbToCsvJobParameter&gt; inputParam) {
+<span class="pc bpc" id="L155" title="1 of 2 branches missed.">        if (inputParam.getJobParameter().getItemProcessor() != null) {</span>
+<span class="nc" id="L156">            return (ItemProcessor&lt;T, T&gt;) inputParam.getJobParameter().getItemProcessor();</span>
+        }
+<span class="fc" id="L158">        return item -&gt; item;</span>
+    }
+
+    @Bean
+    @StepScope
+    public &lt;D extends BatchItem&gt; FlatFileItemWriter&lt;D&gt; writerForDbToCsvJob(
+            @Value(&quot;#{jobParameters[T(com.aril.arilbatchsdk.config.ArilBatchConfigConstants).INPUT_PARAM]}&quot;) BatchJobParameterWrapper&lt;BatchDbToCsvJobParameter&gt; inputParam,
+            @Value(&quot;#{jobParameters[T(com.aril.arilbatchsdk.config.ArilBatchConfigConstants).INPUT_PARAM_IDENTIFIER]}&quot;) String identifier) {
+<span class="fc" id="L166">        return new FlatFileItemWriterBuilder&lt;D&gt;()</span>
+<span class="fc" id="L167">                .name(WRITER_NAME)</span>
+<span class="fc" id="L168">                .resource(new FileSystemResource(JobUtils.getCsvFilenameById(identifier)))</span>
+<span class="fc" id="L169">                .headerCallback(writer -&gt; writer.write(inputParam.getJobParameter().getOutputHeader()))</span>
+<span class="fc" id="L170">                .lineAggregator(delimitedLineAggregator(inputParam.getJobParameter().getOutputFields()))</span>
+<span class="fc" id="L171">                .build();</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.11.202310140853</span></div></body></html>

@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>BatchJobConsumerTracker.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">aril-batch-sdk</a> &gt; <a href="index.source.html" class="el_package">com.aril.arilbatchsdk.entity</a> &gt; <span class="el_source">BatchJobConsumerTracker.java</span></div><h1>BatchJobConsumerTracker.java</h1><pre class="source lang-java linenums">package com.aril.arilbatchsdk.entity;
+
+import jakarta.persistence.*;
+import lombok.*;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
+import org.springframework.batch.core.BatchStatus;
+
+import java.util.Map;
+
+@Getter
+<span class="pc" id="L12">@Setter</span>
+@Entity
+<span class="pc" id="L14">@Builder</span>
+<span class="fc" id="L15">@NoArgsConstructor</span>
+<span class="fc" id="L16">@AllArgsConstructor</span>
+@Table(name = &quot;co_batch_job_consumer_trackers&quot;)
+public class BatchJobConsumerTracker {
+
+    @Id
+    @Column(name = &quot;job_instance_id&quot;, nullable = false)
+<span class="fc" id="L22">    private Long jobInstanceId;</span>
+
+    @Column(name = &quot;topic&quot;, nullable = false)
+<span class="fc" id="L25">    private String topic;</span>
+
+    @Column(name = &quot;notifier_topic&quot;)
+<span class="fc" id="L28">    private String notifierTopic;</span>
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = &quot;status&quot;, nullable = false)
+<span class="fc" id="L32">    private BatchStatus status;</span>
+
+    @Column(name = &quot;start_time&quot;, nullable = false)
+<span class="fc" id="L35">    private Long startTime;</span>
+
+    @Column(name = &quot;create_time&quot;, nullable = false)
+<span class="fc" id="L38">    private Long createTime;</span>
+
+    @Column(name = &quot;end_time&quot;)
+<span class="fc" id="L41">    private Long endTime;</span>
+
+    @Column(name = &quot;last_updated&quot;, nullable = false)
+<span class="fc" id="L44">    private Long lastUpdated;</span>
+
+    @Column(name = &quot;read_count&quot;, nullable = false)
+<span class="fc" id="L47">    private Long readCount;</span>
+
+    @Column(name = &quot;produce_count&quot;, nullable = false)
+<span class="fc" id="L50">    private Long produceCount;</span>
+
+    @Column(name = &quot;produce_skip_count&quot;, nullable = false)
+<span class="fc" id="L53">    private Long produceSkipCount;</span>
+
+    @Column(name = &quot;consume_percentage&quot;)
+<span class="fc" id="L56">    private Integer consumePercentage;</span>
+
+    @JdbcTypeCode(SqlTypes.JSON) //default-format for postgres is jsonb
+    @Column(name = &quot;produce_snapshot&quot;)
+<span class="fc" id="L60">    private Map&lt;Integer, Long&gt; produceSnapshot;</span>
+
+    @MapsId
+    @JoinColumn(name = &quot;job_instance_id&quot;, insertable = false, updatable = false)
+    @OneToOne(fetch = FetchType.LAZY, optional = false)
+<span class="nc" id="L65">    private BatchJobSummary summary;</span>
+
+    @Version
+    @Column(name = &quot;version&quot;, nullable = false)
+<span class="fc" id="L69">    private Long version;</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.11.202310140853</span></div></body></html>

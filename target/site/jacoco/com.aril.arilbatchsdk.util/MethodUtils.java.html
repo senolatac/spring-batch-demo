@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>MethodUtils.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">aril-batch-sdk</a> &gt; <a href="index.source.html" class="el_package">com.aril.arilbatchsdk.util</a> &gt; <span class="el_source">MethodUtils.java</span></div><h1>MethodUtils.java</h1><pre class="source lang-java linenums">package com.aril.arilbatchsdk.util;
+
+import lombok.AccessLevel;
+import lombok.NoArgsConstructor;
+
+import java.lang.annotation.Annotation;
+import java.lang.reflect.Method;
+import java.util.ArrayList;
+import java.util.List;
+
+@NoArgsConstructor(access = AccessLevel.PRIVATE)
+public final class MethodUtils {
+
+    public static List&lt;Method&gt; getMethodsAnnotatedWith(final Class&lt;?&gt; type, final Class&lt;? extends Annotation&gt; annotation) {
+<span class="fc" id="L15">        final List&lt;Method&gt; methods = new ArrayList&lt;&gt;();</span>
+<span class="fc" id="L16">        Class&lt;?&gt; klass = type;</span>
+<span class="fc bfc" id="L17" title="All 2 branches covered.">        while (klass != Object.class) { // need to traverse a type hierarchy in order to process methods from super types</span>
+            // iterate though the list of methods declared in the class represented by klass variable, and add those annotated with the specified annotation
+<span class="fc bfc" id="L19" title="All 2 branches covered.">            for (final Method method : klass.getDeclaredMethods()) {</span>
+<span class="fc bfc" id="L20" title="All 2 branches covered.">                if (method.isAnnotationPresent(annotation)) {</span>
+<span class="fc" id="L21">                    methods.add(method);</span>
+                }
+            }
+            // move to the upper class in the hierarchy in search for more methods
+<span class="fc" id="L25">            klass = klass.getSuperclass();</span>
+        }
+<span class="fc" id="L27">        return methods;</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.11.202310140853</span></div></body></html>

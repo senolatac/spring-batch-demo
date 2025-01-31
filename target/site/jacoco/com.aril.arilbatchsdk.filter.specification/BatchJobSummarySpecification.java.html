@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>BatchJobSummarySpecification.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">aril-batch-sdk</a> &gt; <a href="index.source.html" class="el_package">com.aril.arilbatchsdk.filter.specification</a> &gt; <span class="el_source">BatchJobSummarySpecification.java</span></div><h1>BatchJobSummarySpecification.java</h1><pre class="source lang-java linenums">package com.aril.arilbatchsdk.filter.specification;
+
+import com.aril.arilbatchsdk.entity.BatchJobSummary;
+import com.aril.arilbatchsdk.entity.BatchJobSummary_;
+import com.aril.arilbatchsdk.filter.predicate.FilterBatchJobSummaryPredicates;
+import com.aril.arilbatchsdk.filter.usecase.FilterBatchJobUseCase;
+import com.aril.arilbatchsdk.util.SpecificationUtils;
+import jakarta.persistence.criteria.*;
+import lombok.NonNull;
+import lombok.RequiredArgsConstructor;
+import org.springframework.data.jpa.domain.Specification;
+
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+
+<span class="fc" id="L17">@RequiredArgsConstructor</span>
+public class BatchJobSummarySpecification implements Specification&lt;BatchJobSummary&gt; {
+    private final transient FilterBatchJobUseCase filterBatchJobUseCase;
+
+    @Override
+<span class="pc bpc" id="L22" title="1 of 2 branches missed.">    public Predicate toPredicate(@NonNull Root&lt;BatchJobSummary&gt; root,</span>
+<span class="pc bpc" id="L23" title="1 of 2 branches missed.">                                 @NonNull CriteriaQuery&lt;?&gt; query,</span>
+                                 CriteriaBuilder criteriaBuilder) {
+<span class="fc" id="L25">        Map&lt;String, Join&lt;?, ?&gt;&gt; joinMap = joinMap(root, query);</span>
+
+<span class="fc" id="L27">        List&lt;Predicate&gt; predicates = FilterBatchJobSummaryPredicates._VALUES.stream()</span>
+<span class="fc" id="L28">                .map(field -&gt; field.toPredicate(filterBatchJobUseCase, root, criteriaBuilder, joinMap))</span>
+<span class="fc" id="L29">                .filter(Objects::nonNull)</span>
+<span class="fc" id="L30">                .toList();</span>
+
+<span class="fc" id="L32">        return criteriaBuilder.and(predicates.toArray(new Predicate[0]));</span>
+    }
+
+    private Map&lt;String, Join&lt;?, ?&gt;&gt; joinMap(Root&lt;BatchJobSummary&gt; root, CriteriaQuery&lt;?&gt; query) {
+<span class="fc" id="L36">        return Map.of(</span>
+<span class="fc" id="L37">                BatchJobSummary_.CONSUMER_TRACKER, SpecificationUtils.getJoinOrFetch(root, query, BatchJobSummary_.CONSUMER_TRACKER, JoinType.LEFT),</span>
+<span class="fc" id="L38">                BatchJobSummary_.RESULT_SUMMARY, SpecificationUtils.getJoinOrFetch(root, query, BatchJobSummary_.RESULT_SUMMARY, JoinType.LEFT)</span>
+        );
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.11.202310140853</span></div></body></html>

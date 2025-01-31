@@ -1,0 +1,223 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>ExcelStreamItemWriterBuilder.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">aril-batch-sdk</a> &gt; <a href="index.source.html" class="el_package">com.aril.arilbatchsdk.core.item.excel</a> &gt; <span class="el_source">ExcelStreamItemWriterBuilder.java</span></div><h1>ExcelStreamItemWriterBuilder.java</h1><pre class="source lang-java linenums">package com.aril.arilbatchsdk.core.item.excel;
+
+import com.aril.arilbatchsdk.core.item.excel.support.ExcelStreamFooterCallback;
+import com.aril.arilbatchsdk.core.item.excel.support.ExcelStreamHeaderCallback;
+import com.aril.arilbatchsdk.core.item.excel.support.ExcelThousandSeparatorFormat;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.batch.item.file.transform.BeanWrapperFieldExtractor;
+import org.springframework.batch.item.file.transform.FieldExtractor;
+import org.springframework.core.io.WritableResource;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Objects;
+
+<span class="fc" id="L16">@Slf4j</span>
+<span class="fc" id="L17">public class ExcelStreamItemWriterBuilder&lt;T&gt; {</span>
+
+    private String name;
+    private WritableResource resource;
+    private boolean append;
+<span class="fc" id="L22">    private boolean shouldDeleteIfExists = true;</span>
+    private Integer charset;
+<span class="fc" id="L24">    private final List&lt;String&gt; columnNames = new ArrayList&lt;&gt;();</span>
+<span class="fc" id="L25">    private String sheetName = &quot;default&quot;;</span>
+<span class="fc" id="L26">    private boolean shouldDeleteIfEmpty = true;</span>
+    private ExcelStreamHeaderCallback headerCallback;
+    private ExcelStreamFooterCallback footerCallback;
+    private FieldExtractor&lt;T&gt; fieldExtractor;
+<span class="fc" id="L30">    private ExcelThousandSeparatorFormat thousandSeparatorFormat = ExcelThousandSeparatorFormat.DOT;</span>
+
+    /**
+     * The name used to calculate the key within the
+     * {@link org.springframework.batch.item.ExecutionContext}.
+     *
+     * @param name name of the reader instance
+     * @return The current instance of the builder.
+     * @see org.springframework.batch.item.ItemStreamSupport#setName(String)
+     */
+    public ExcelStreamItemWriterBuilder&lt;T&gt; name(String name) {
+<span class="fc" id="L41">        this.name = name;</span>
+
+<span class="fc" id="L43">        return this;</span>
+    }
+
+    /**
+     * The {@link WritableResource} to be used as output.
+     *
+     * @param resource the output of the writer.
+     * @return The current instance of the builder.
+     * @see ExcelStreamItemWriter#setResource (WritableResource)
+     */
+    public ExcelStreamItemWriterBuilder&lt;T&gt; resource(WritableResource resource) {
+<span class="fc" id="L54">        this.resource = resource;</span>
+
+<span class="fc" id="L56">        return this;</span>
+    }
+
+    /**
+     * @param sheetName excel-sheet-name.
+     * @return The current instance of the builder.
+     * @see ExcelStreamItemWriter#setSheetName (String)
+     */
+    public ExcelStreamItemWriterBuilder&lt;T&gt; sheetName(String sheetName) {
+<span class="nc" id="L65">        this.sheetName = sheetName;</span>
+
+<span class="nc" id="L67">        return this;</span>
+    }
+
+    /**
+     * Names of each of the fields within the fields that are returned in the order
+     * they occur within the formatted file. These names will be used to create a
+     * {@link BeanWrapperFieldExtractor} only if no explicit field extractor is set
+     *
+     * @param names names of each field
+     * @return The parent {@link ExcelStreamItemWriterBuilder}
+     * @see BeanWrapperFieldExtractor#setNames(String[])
+     */
+    public ExcelStreamItemWriterBuilder&lt;T&gt; columnNames(String... names) {
+<span class="fc" id="L80">        this.columnNames.addAll(Arrays.asList(names));</span>
+
+<span class="fc" id="L82">        return this;</span>
+    }
+
+    /**
+     * Encoding used for output.
+     *
+     * @param charset encoding type.
+     * @return The current instance of the builder.
+     * @see ExcelStreamItemWriter#setCharset(Integer)
+     */
+    public ExcelStreamItemWriterBuilder&lt;T&gt; encoding(Integer charset) {
+<span class="nc" id="L93">        this.charset = charset;</span>
+
+<span class="nc" id="L95">        return this;</span>
+    }
+
+    /**
+     * Encoding used for output.
+     *
+     * @param format thousandSeparatorFormat.
+     * @return The current instance of the builder.
+     * @see ExcelStreamItemWriter#setThousandSeparatorFormat(ExcelThousandSeparatorFormat)
+     */
+    public ExcelStreamItemWriterBuilder&lt;T&gt; thousandSeparatorFormat(ExcelThousandSeparatorFormat format) {
+<span class="fc" id="L106">        this.thousandSeparatorFormat = format;</span>
+
+<span class="fc" id="L108">        return this;</span>
+    }
+
+    /**
+     * If set to true, once the step is complete, if the resource previously provided is
+     * empty, it will be deleted.
+     *
+     * @param shouldDelete defaults to false
+     * @return The current instance of the builder
+     * @see ExcelStreamItemWriter#setShouldDeleteIfEmpty(boolean)
+     */
+    public ExcelStreamItemWriterBuilder&lt;T&gt; shouldDeleteIfEmpty(boolean shouldDelete) {
+<span class="nc" id="L120">        this.shouldDeleteIfEmpty = shouldDelete;</span>
+
+<span class="nc" id="L122">        return this;</span>
+    }
+
+    /**
+     * If set to true, upon the start of the step, if the resource already exists, it will
+     * be deleted and recreated.
+     *
+     * @param shouldDelete defaults to true
+     * @return The current instance of the builder
+     * @see ExcelStreamItemWriter#setShouldDeleteIfExists(boolean)
+     */
+    public ExcelStreamItemWriterBuilder&lt;T&gt; shouldDeleteIfExists(boolean shouldDelete) {
+<span class="nc" id="L134">        this.shouldDeleteIfExists = shouldDelete;</span>
+
+<span class="nc" id="L136">        return this;</span>
+    }
+
+    /**
+     * If set to true and the file exists, the output will be appended to the existing
+     * file.
+     *
+     * @param append defaults to false
+     * @return The current instance of the builder
+     * @see ExcelStreamItemWriter#setAppend (boolean)
+     */
+    public ExcelStreamItemWriterBuilder&lt;T&gt; append(boolean append) {
+<span class="nc" id="L148">        this.append = append;</span>
+
+<span class="nc" id="L150">        return this;</span>
+    }
+
+    /**
+     * A callback for header processing.
+     *
+     * @param callback {@link ExcelStreamHeaderCallback} impl
+     * @return The current instance of the builder
+     * @see ExcelStreamItemWriter#setHeaderCallback(ExcelStreamHeaderCallback)
+     */
+    public ExcelStreamItemWriterBuilder&lt;T&gt; headerCallback(ExcelStreamHeaderCallback callback) {
+<span class="fc" id="L161">        this.headerCallback = callback;</span>
+
+<span class="fc" id="L163">        return this;</span>
+    }
+
+    /**
+     * A callback for footer processing
+     *
+     * @param callback {@link ExcelStreamFooterCallback} impl
+     * @return The current instance of the builder
+     * @see ExcelStreamItemWriter#setFooterCallback(ExcelStreamFooterCallback)
+     */
+    public ExcelStreamItemWriterBuilder&lt;T&gt; footerCallback(ExcelStreamFooterCallback callback) {
+<span class="nc" id="L174">        this.footerCallback = callback;</span>
+
+<span class="nc" id="L176">        return this;</span>
+    }
+
+    /**
+     * Set the {@link FieldExtractor} to use to extract fields from each item.
+     *
+     * @param fieldExtractor to use to extract fields from each item
+     * @return The current instance of the builder
+     */
+    public ExcelStreamItemWriterBuilder&lt;T&gt; fieldExtractor(FieldExtractor&lt;T&gt; fieldExtractor) {
+<span class="nc" id="L186">        this.fieldExtractor = fieldExtractor;</span>
+
+<span class="nc" id="L188">        return this;</span>
+    }
+
+    /**
+     * Validates and builds a {@link ExcelStreamItemWriter}.
+     *
+     * @return a {@link ExcelStreamItemWriter}
+     */
+    public ExcelStreamItemWriter&lt;T&gt; build() {
+<span class="pc bpc" id="L197" title="1 of 2 branches missed.">        if (this.resource == null) {</span>
+<span class="nc" id="L198">            log.debug(&quot;The resource is null. This is only a valid scenario when &quot;</span>
+                    + &quot;injecting it later as in when using the MultiResourceItemWriter&quot;);
+        }
+
+<span class="fc" id="L202">        return buildExcelStreamItemWriter();</span>
+    }
+
+    private ExcelStreamItemWriter&lt;T&gt; buildExcelStreamItemWriter() {
+<span class="fc" id="L206">        ExcelStreamItemWriter&lt;T&gt; writer = new ExcelStreamItemWriter&lt;&gt;();</span>
+
+<span class="fc" id="L208">        writer.setName(this.name);</span>
+<span class="fc" id="L209">        writer.setAppend(this.append);</span>
+<span class="fc" id="L210">        writer.setCharset(this.charset);</span>
+<span class="fc" id="L211">        writer.setFooterCallback(this.footerCallback);</span>
+<span class="fc" id="L212">        writer.setHeaderCallback(this.headerCallback);</span>
+<span class="fc" id="L213">        writer.setResource(this.resource);</span>
+<span class="fc" id="L214">        writer.setShouldDeleteIfEmpty(this.shouldDeleteIfEmpty);</span>
+<span class="fc" id="L215">        writer.setShouldDeleteIfExists(this.shouldDeleteIfExists);</span>
+<span class="fc" id="L216">        writer.setFieldExtractor(this.fieldExtractor);</span>
+<span class="fc" id="L217">        writer.setSheetName(this.sheetName);</span>
+<span class="fc" id="L218">        writer.setColumnNames(columnNames.toArray(new String[]{}));</span>
+<span class="fc" id="L219">        writer.setThousandSeparatorFormat(Objects.requireNonNullElse(this.thousandSeparatorFormat, ExcelThousandSeparatorFormat.DOT));</span>
+<span class="fc" id="L220">        return writer;</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.11.202310140853</span></div></body></html>

@@ -1,0 +1,115 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>BatchJobItemResultService.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">aril-batch-sdk</a> &gt; <a href="index.source.html" class="el_package">com.aril.arilbatchsdk.service</a> &gt; <span class="el_source">BatchJobItemResultService.java</span></div><h1>BatchJobItemResultService.java</h1><pre class="source lang-java linenums">package com.aril.arilbatchsdk.service;
+
+import com.aril.arilbatchsdk.core.result.BatchJobItemErrorDetail;
+import com.aril.arilbatchsdk.core.result.BatchJobItemResultParameter;
+import com.aril.arilbatchsdk.entity.BatchJobItemResult;
+import com.aril.arilbatchsdk.repository.BatchJobItemResultRepository;
+import com.aril.arilbatchsdk.repository.projection.StatusCounterProjection;
+import com.aril.arilbatchsdk.util.GsonUtils;
+import com.aril.valhala.batch.BatchItemResult;
+import com.aril.valhala.util.date.DateUtils;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.batch.core.BatchStatus;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
+
+import java.io.Serializable;
+import java.time.LocalDateTime;
+import java.util.Map;
+import java.util.stream.Collectors;
+
+<span class="fc" id="L26">@Slf4j</span>
+@Service
+<span class="fc" id="L28">@RequiredArgsConstructor</span>
+@ConditionalOnClass({JpaRepository.class})
+public class BatchJobItemResultService {
+
+    private final BatchJobItemResultRepository batchJobItemResultRepository;
+    private final MessageSourceService messageSourceService;
+
+    public Page&lt;BatchJobItemResult&gt; findJobItemResults(Long jobId, Pageable pageable) {
+<span class="fc" id="L36">        return batchJobItemResultRepository.findByJobInstanceId(jobId, pageable);</span>
+    }
+
+    public Map&lt;BatchStatus, Long&gt; countByStatus(Long jobId) {
+<span class="fc" id="L40">        return batchJobItemResultRepository.countByStatus(jobId).stream()</span>
+<span class="fc" id="L41">                .collect(Collectors.toMap(StatusCounterProjection::getStatus, StatusCounterProjection::getCount));</span>
+    }
+
+    public &lt;T extends BatchItemResult&gt; BatchJobItemResult save(BatchJobItemResultParameter&lt;T&gt; resultParameter) {
+<span class="fc" id="L45">        BatchJobItemResult result = execute(resultParameter);</span>
+
+<span class="pc bpc" id="L47" title="1 of 4 branches missed.">        if (resultParameter.isSaveResult() &amp;&amp; result != null) {</span>
+<span class="fc" id="L48">            batchJobItemResultRepository.save(result);</span>
+        }
+<span class="fc" id="L50">        return result;</span>
+    }
+
+    private &lt;T extends BatchItemResult&gt; BatchJobItemResult execute(BatchJobItemResultParameter&lt;T&gt; resultParameter) {
+<span class="fc" id="L54">        int currentRetry = 0;</span>
+<span class="pc bpc" id="L55" title="1 of 2 branches missed.">        while (currentRetry++ &lt; resultParameter.getRetry()) {</span>
+            try {
+<span class="fc" id="L57">                T response = resultParameter.getCallable().call();</span>
+
+<span class="fc" id="L59">                return buildCompletedResult(response, resultParameter);</span>
+<span class="fc" id="L60">            } catch (Exception ex) {</span>
+<span class="fc" id="L61">                log.error(&quot;Exception occurred on job-item-result-execution&quot;, ex);</span>
+
+<span class="fc bfc" id="L63" title="All 2 branches covered.">                if (currentRetry == resultParameter.getRetry()) {</span>
+<span class="fc" id="L64">                    return buildFailedResult(ex, resultParameter);</span>
+                }
+<span class="fc" id="L66">            }</span>
+        }
+<span class="nc" id="L68">        return null;</span>
+    }
+
+    private &lt;T extends BatchItemResult&gt; BatchJobItemResult buildCompletedResult(T response, BatchJobItemResultParameter&lt;T&gt; resultParameter) {
+<span class="fc" id="L72">        return BatchJobItemResult.builder()</span>
+<span class="fc" id="L73">                .jobInstanceId(resultParameter.getJobId())</span>
+<span class="fc" id="L74">                .idempotentKey(resultParameter.getIdempotentKey())</span>
+<span class="fc" id="L75">                .response(GsonUtils.GSON.toJson(response))</span>
+<span class="fc" id="L76">                .status(BatchStatus.COMPLETED)</span>
+<span class="fc" id="L77">                .createTime(DateUtils.toReportLongFormat(LocalDateTime.now()))</span>
+<span class="fc" id="L78">                .endTime(DateUtils.toReportLongFormat(LocalDateTime.now()))</span>
+<span class="fc" id="L79">                .resourceName(resultParameter.getResourceName())</span>
+<span class="fc" id="L80">                .resourceValue(resultParameter.getResourceValue())</span>
+<span class="fc" id="L81">                .resultName(response.getResultName())</span>
+<span class="fc" id="L82">                .resultValue(response.getResultValue())</span>
+<span class="fc" id="L83">                .build();</span>
+    }
+
+    private &lt;T extends BatchItemResult&gt; BatchJobItemResult buildFailedResult(Exception ex, BatchJobItemResultParameter&lt;T&gt; resultParameter) {
+<span class="fc" id="L87">        return BatchJobItemResult.builder()</span>
+<span class="fc" id="L88">                .jobInstanceId(resultParameter.getJobId())</span>
+<span class="fc" id="L89">                .idempotentKey(resultParameter.getIdempotentKey())</span>
+<span class="fc" id="L90">                .response(GsonUtils.GSON.toJson(buildExceptionResponse(ex)))</span>
+<span class="fc" id="L91">                .status(BatchStatus.FAILED)</span>
+<span class="fc" id="L92">                .createTime(DateUtils.toReportLongFormat(LocalDateTime.now()))</span>
+<span class="fc" id="L93">                .errorDetail(errorDetail(ex, resultParameter))</span>
+<span class="fc" id="L94">                .resourceName(resultParameter.getResourceName())</span>
+<span class="fc" id="L95">                .resourceValue(resultParameter.getResourceValue())</span>
+<span class="fc" id="L96">                .build();</span>
+    }
+
+    private String buildExceptionResponse(Exception ex) {
+<span class="fc" id="L100">        BatchJobItemErrorDetail errorDetail = BatchJobItemErrorDetail.builder()</span>
+<span class="fc" id="L101">                .exceptionClass(ex.getClass().getCanonicalName())</span>
+<span class="fc" id="L102">                .message(ex.getMessage())</span>
+<span class="fc" id="L103">                .build();</span>
+<span class="fc" id="L104">        return GsonUtils.GSON.toJson(errorDetail);</span>
+    }
+
+    private &lt;T extends Serializable&gt; String errorDetail(Exception ex, BatchJobItemResultParameter&lt;T&gt; resultParameter) {
+<span class="fc" id="L108">        String error = ex.getMessage();</span>
+<span class="fc bfc" id="L109" title="All 2 branches covered.">        if (StringUtils.hasText(resultParameter.getErrorMessage())) {</span>
+<span class="fc" id="L110">            error = resultParameter.getErrorMessage();</span>
+        }
+<span class="fc" id="L112">        return messageSourceService.getMessage(error);</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.11.202310140853</span></div></body></html>

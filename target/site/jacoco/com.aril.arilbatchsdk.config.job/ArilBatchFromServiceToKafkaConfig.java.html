@@ -1,0 +1,152 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>ArilBatchFromServiceToKafkaConfig.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">aril-batch-sdk</a> &gt; <a href="index.source.html" class="el_package">com.aril.arilbatchsdk.config.job</a> &gt; <span class="el_source">ArilBatchFromServiceToKafkaConfig.java</span></div><h1>ArilBatchFromServiceToKafkaConfig.java</h1><pre class="source lang-java linenums">package com.aril.arilbatchsdk.config.job;
+
+import com.aril.arilbatchsdk.config.ArilBatchConfigConstants;
+import com.aril.arilbatchsdk.config.ArilBatchProperties;
+import com.aril.arilbatchsdk.core.BatchType;
+import com.aril.arilbatchsdk.core.item.kafka.KafkaItemIdempotentWriter;
+import com.aril.arilbatchsdk.core.item.kafka.KafkaItemIdempotentWriterBuilder;
+import com.aril.arilbatchsdk.core.item.service.reader.ServiceItemReader;
+import com.aril.arilbatchsdk.core.item.support.IdempotentWriter;
+import com.aril.arilbatchsdk.core.listener.ChunkStepExecutionListener;
+import com.aril.arilbatchsdk.core.listener.IdempotentJobEventProcessorListener;
+import com.aril.arilbatchsdk.core.listener.JobExecutionStatusChangeListener;
+import com.aril.arilbatchsdk.core.parameter.BatchServiceToKafkaJobParameter;
+import com.aril.arilbatchsdk.core.parameter.support.BatchJobParameterWrapper;
+import com.aril.arilbatchsdk.core.processor.IdempotentJobEventProcessor;
+import com.aril.arilbatchsdk.core.skip.IdempotentSkipPolicy;
+import com.aril.arilbatchsdk.core.tasklet.consumer.ConsumerTrackerTasklet;
+import com.aril.arilbatchsdk.facade.BatchConsumerTrackerFacade;
+import com.aril.arilbatchsdk.service.BatchJobSummaryService;
+import com.aril.arilidempotentsdk.annotation.EnableArilIdempotent;
+import com.aril.arilidempotentsdk.core.ArilIdempotentTemplate;
+import com.aril.arilidempotentsdk.exception.ArilIdempotentException;
+import com.aril.arilkafka.annotation.EnableArilKafka;
+import com.aril.arilkafka.config.BeanIds;
+import com.aril.arilkafka.core.ArilKafkaTemplate;
+import com.aril.valhala.batch.IdempotentBatchItem;
+import com.aril.valhala.event.IdempotentJobEvent;
+import org.springframework.batch.core.Job;
+import org.springframework.batch.core.Step;
+import org.springframework.batch.core.configuration.annotation.JobScope;
+import org.springframework.batch.core.configuration.annotation.StepScope;
+import org.springframework.batch.core.job.builder.JobBuilder;
+import org.springframework.batch.core.launch.support.RunIdIncrementer;
+import org.springframework.batch.core.repository.JobRepository;
+import org.springframework.batch.core.step.builder.StepBuilder;
+import org.springframework.batch.item.ItemProcessor;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Lazy;
+import org.springframework.retry.policy.NeverRetryPolicy;
+import org.springframework.transaction.PlatformTransactionManager;
+
+@Lazy
+@Configuration
+@EnableArilKafka
+@EnableArilIdempotent
+@ConditionalOnClass({ArilKafkaTemplate.class, ArilIdempotentTemplate.class})
+<span class="fc" id="L51">public class ArilBatchFromServiceToKafkaConfig {</span>
+
+    public static final String READER_NAME = &quot;readerForServiceToKafkaJob&quot;;
+    public static final String CHUNK_STEP_NAME = &quot;chunkStepForServiceToKafkaJob&quot;;
+    private static final String LOG_STEP_NAME = &quot;logStepForServiceToKafkaJob&quot;;
+    private static final String JOB_NAME = &quot;jobForServiceToKafkaJob&quot;;
+
+    @Bean(ArilBatchConfigConstants.JOB_FOR_SERVICE_TO_KAFKA)
+    public Job jobForServiceToKafkaJob(JobRepository jobRepository,
+                                       Step chunkStepForServiceToKafkaJob,
+                                       Step logStepForServiceToKafkaJob,
+                                       JobExecutionStatusChangeListener jobExecutionStatusChangeListenerForServiceToKafkaJob) {
+<span class="fc" id="L63">        return new JobBuilder(JOB_NAME, jobRepository)</span>
+<span class="fc" id="L64">                .incrementer(new RunIdIncrementer())</span>
+<span class="fc" id="L65">                .start(chunkStepForServiceToKafkaJob)</span>
+<span class="fc" id="L66">                .next(logStepForServiceToKafkaJob)</span>
+<span class="fc" id="L67">                .listener(jobExecutionStatusChangeListenerForServiceToKafkaJob)</span>
+<span class="fc" id="L68">                .build();</span>
+    }
+
+    @Bean
+    @JobScope
+    public JobExecutionStatusChangeListener jobExecutionStatusChangeListenerForServiceToKafkaJob(
+            @Value(&quot;#{jobParameters[T(com.aril.arilbatchsdk.config.ArilBatchConfigConstants).INPUT_PARAM]}&quot;) BatchJobParameterWrapper&lt;BatchServiceToKafkaJobParameter&gt; inputParam
+    ) {
+<span class="fc" id="L76">        return new JobExecutionStatusChangeListener(inputParam.getJobParameter().getJobExecutionChangeSubscriber());</span>
+    }
+
+    @Bean
+    @JobScope
+    @SuppressWarnings(&quot;unchecked&quot;)
+    public &lt;D extends IdempotentJobEvent&lt;?&gt;&gt; Step chunkStepForServiceToKafkaJob(JobRepository jobRepository,
+                                                                                ArilBatchProperties arilBatchProperties,
+                                                                                PlatformTransactionManager transactionManager,
+                                                                                KafkaItemIdempotentWriter&lt;D&gt; writerForServiceToKafkaJob,
+                                                                                BatchJobSummaryService arilBatchJobSummaryService,
+                                                                                IdempotentJobEventProcessorListener idempotentJobEventProcessorListener,
+                                                                                ItemProcessor&lt;? extends IdempotentBatchItem, ? extends IdempotentJobEvent&lt;?&gt;&gt; processorForServiceToKafkaJob,
+                                                                                @Value(&quot;#{jobParameters[T(com.aril.arilbatchsdk.config.ArilBatchConfigConstants).INPUT_PARAM]}&quot;) BatchJobParameterWrapper&lt;BatchServiceToKafkaJobParameter&gt; inputParam) {
+<span class="fc" id="L90">        return new StepBuilder(CHUNK_STEP_NAME, jobRepository)</span>
+<span class="fc" id="L91">                .&lt;IdempotentBatchItem, D&gt;chunk(inputParam.getJobParameter().getChunkSize(), transactionManager)</span>
+<span class="fc" id="L92">                .reader(readerForServiceToKafkaJob(inputParam))</span>
+<span class="fc" id="L93">                .processor((ItemProcessor&lt;? super IdempotentBatchItem, ? extends D&gt;) processorForServiceToKafkaJob)</span>
+<span class="fc" id="L94">                .listener(idempotentJobEventProcessorListener)</span>
+<span class="fc" id="L95">                .writer(writerForServiceToKafkaJob)</span>
+<span class="fc" id="L96">                .listener(new ChunkStepExecutionListener(BatchType.SERVICE_TO_KAFKA, arilBatchProperties.getActiveModule(), inputParam.getJobParameter(), arilBatchJobSummaryService))</span>
+<span class="fc" id="L97">                .faultTolerant()</span>
+<span class="fc" id="L98">                .skip(ArilIdempotentException.class)</span>
+<span class="fc" id="L99">                .skipPolicy(new IdempotentSkipPolicy())</span>
+<span class="fc" id="L100">                .retryPolicy(new NeverRetryPolicy())</span>
+<span class="fc" id="L101">                .processorNonTransactional()</span>
+<span class="fc" id="L102">                .build();</span>
+    }
+
+    @Bean
+    @JobScope
+    public Step logStepForServiceToKafkaJob(JobRepository jobRepository,
+                                            BatchConsumerTrackerFacade batchConsumerTrackerFacade,
+                                            PlatformTransactionManager transactionManager,
+                                            @Value(&quot;#{jobParameters[T(com.aril.arilbatchsdk.config.ArilBatchConfigConstants).INPUT_PARAM]}&quot;) BatchJobParameterWrapper&lt;BatchServiceToKafkaJobParameter&gt; inputParam) {
+<span class="fc" id="L111">        return new StepBuilder(LOG_STEP_NAME, jobRepository)</span>
+<span class="fc" id="L112">                .tasklet(new ConsumerTrackerTasklet(batchConsumerTrackerFacade, inputParam.getJobParameter().getTopic(), inputParam.getJobParameter().getConsumerCompletedNotifierTopic(), CHUNK_STEP_NAME), transactionManager)</span>
+<span class="fc" id="L113">                .build();</span>
+    }
+
+    @Bean
+    @StepScope
+    @SuppressWarnings(&quot;unchecked&quot;)
+    public &lt;T extends IdempotentBatchItem&gt; ServiceItemReader&lt;T&gt; readerForServiceToKafkaJob(
+            @Value(&quot;#{jobParameters[T(com.aril.arilbatchsdk.config.ArilBatchConfigConstants).INPUT_PARAM]}&quot;) BatchJobParameterWrapper&lt;BatchServiceToKafkaJobParameter&gt; inputParam) {
+<span class="fc" id="L121">        return (ServiceItemReader&lt;T&gt;) inputParam.getJobParameter().getServiceItemReader();</span>
+    }
+
+    @Bean
+    @StepScope
+    @SuppressWarnings(&quot;unchecked&quot;)
+    public &lt;I extends IdempotentBatchItem, O extends IdempotentJobEvent&lt;?&gt;&gt; ItemProcessor&lt;I, O&gt; processorForServiceToKafkaJob(
+            @Value(&quot;#{jobParameters[T(com.aril.arilbatchsdk.config.ArilBatchConfigConstants).INPUT_PARAM]}&quot;) BatchJobParameterWrapper&lt;BatchServiceToKafkaJobParameter&gt; inputParam,
+            IdempotentJobEventProcessor idempotentJobEventProcessor) {
+<span class="pc bpc" id="L130" title="1 of 2 branches missed.">        if (inputParam.getJobParameter().getItemProcessor() != null) {</span>
+<span class="nc" id="L131">            return (ItemProcessor&lt;I, O&gt;) inputParam.getJobParameter().getItemProcessor();</span>
+        }
+<span class="fc" id="L133">        return (ItemProcessor&lt;I, O&gt;) idempotentJobEventProcessor;</span>
+    }
+
+    @Bean
+    @StepScope
+    public &lt;D extends IdempotentJobEvent&lt;?&gt;&gt; KafkaItemIdempotentWriter&lt;D&gt; writerForServiceToKafkaJob(
+            @Qualifier(BeanIds.ARIL_KAFKA_TEMPLATE) ArilKafkaTemplate&lt;String, D&gt; arilKafkaTemplate,
+            ArilIdempotentTemplate arilIdempotentTemplate,
+            @Value(&quot;#{jobParameters[T(com.aril.arilbatchsdk.config.ArilBatchConfigConstants).INPUT_PARAM]}&quot;) BatchJobParameterWrapper&lt;BatchServiceToKafkaJobParameter&gt; inputParam) {
+<span class="fc" id="L142">        return new KafkaItemIdempotentWriterBuilder&lt;D&gt;()</span>
+<span class="fc" id="L143">                .name(inputParam.getJobParameter().getJobName())</span>
+<span class="fc" id="L144">                .topic(inputParam.getJobParameter().getTopic())</span>
+<span class="fc" id="L145">                .idempotencyOptions(inputParam.getJobParameter().getIdempotencyOptions())</span>
+<span class="fc" id="L146">                .idempotentWriter(new IdempotentWriter(arilIdempotentTemplate))</span>
+<span class="fc" id="L147">                .kafkaTemplate(arilKafkaTemplate)</span>
+<span class="fc" id="L148">                .build();</span>
+    }
+}
+
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.11.202310140853</span></div></body></html>

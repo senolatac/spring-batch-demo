@@ -1,0 +1,176 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>ArilBatchFromDbToExcelConfig.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">aril-batch-sdk</a> &gt; <a href="index.source.html" class="el_package">com.aril.arilbatchsdk.config.job</a> &gt; <span class="el_source">ArilBatchFromDbToExcelConfig.java</span></div><h1>ArilBatchFromDbToExcelConfig.java</h1><pre class="source lang-java linenums">package com.aril.arilbatchsdk.config.job;
+
+import com.aril.arilbatchsdk.config.ArilBatchConfigConstants;
+import com.aril.arilbatchsdk.config.ArilBatchProperties;
+import com.aril.arilbatchsdk.core.BatchType;
+import com.aril.arilbatchsdk.core.FileUploader;
+import com.aril.arilbatchsdk.core.item.excel.ExcelStreamItemWriter;
+import com.aril.arilbatchsdk.core.item.excel.ExcelStreamItemWriterBuilder;
+import com.aril.arilbatchsdk.core.item.excel.support.DefaultExcelStreamHeaderCallback;
+import com.aril.arilbatchsdk.core.listener.ChunkStepExecutionListener;
+import com.aril.arilbatchsdk.core.listener.JobExecutionStatusChangeListener;
+import com.aril.arilbatchsdk.core.parameter.BatchDbToExcelJobParameter;
+import com.aril.arilbatchsdk.core.parameter.support.BatchJobParameterWrapper;
+import com.aril.arilbatchsdk.core.parameter.support.RepositoryItemReaderParameter;
+import com.aril.arilbatchsdk.core.tasklet.export.ExportMetadataTasklet;
+import com.aril.arilbatchsdk.core.tasklet.file.ExcelFileUploaderTasklet;
+import com.aril.arilbatchsdk.core.tasklet.file.LocalFileDeleteTasklet;
+import com.aril.arilbatchsdk.service.BatchJobSummaryService;
+import com.aril.arilbatchsdk.util.JobUtils;
+import com.aril.valhala.batch.BatchItem;
+import org.springframework.batch.core.Job;
+import org.springframework.batch.core.Step;
+import org.springframework.batch.core.configuration.annotation.JobScope;
+import org.springframework.batch.core.configuration.annotation.StepScope;
+import org.springframework.batch.core.job.builder.JobBuilder;
+import org.springframework.batch.core.launch.support.RunIdIncrementer;
+import org.springframework.batch.core.repository.JobRepository;
+import org.springframework.batch.core.step.builder.StepBuilder;
+import org.springframework.batch.item.ItemProcessor;
+import org.springframework.batch.item.data.RepositoryItemReader;
+import org.springframework.batch.item.data.builder.RepositoryItemReaderBuilder;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Lazy;
+import org.springframework.core.io.FileSystemResource;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.transaction.PlatformTransactionManager;
+
+@Lazy
+@Configuration
+@ConditionalOnClass(JpaRepository.class)
+<span class="fc" id="L44">public class ArilBatchFromDbToExcelConfig {</span>
+
+    public static final String READER_NAME = &quot;readerForDbToExcelJob&quot;;
+    private static final String WRITER_NAME = &quot;writerForDbToExcelJob&quot;;
+    private static final String CHUNK_STEP_NAME = &quot;chunkStepForDbToExcelJob&quot;;
+    private static final String LOG_STEP_NAME = &quot;logStepForDbToExcelJob&quot;;
+    private static final String FILE_UPLOADER_STEP_NAME = &quot;fileUploaderForDbToExcelJob&quot;;
+    private static final String TMP_FILE_DELETE_STEP_NAME = &quot;tmpFileDeleteForDbToExcelJob&quot;;
+    private static final String JOB_NAME = &quot;jobForDbToExcelJob&quot;;
+
+    @Bean(ArilBatchConfigConstants.JOB_FOR_DB_TO_EXCEL)
+    public Job jobForDbToExcel(JobRepository jobRepository,
+                               Step chunkStepForDbToExcelJob,
+                               Step uploaderStepForDbToExcelJob,
+                               Step tmpFileDeleteStepForDbToExcelJob,
+                               Step logStepForDbToExcelJob,
+                               JobExecutionStatusChangeListener jobExecutionStatusChangeListenerForDbToExcelJob) {
+<span class="fc" id="L61">        return new JobBuilder(JOB_NAME, jobRepository)</span>
+<span class="fc" id="L62">                .incrementer(new RunIdIncrementer())</span>
+<span class="fc" id="L63">                .start(chunkStepForDbToExcelJob)</span>
+<span class="fc" id="L64">                .next(uploaderStepForDbToExcelJob)</span>
+<span class="fc" id="L65">                .next(tmpFileDeleteStepForDbToExcelJob)</span>
+<span class="fc" id="L66">                .next(logStepForDbToExcelJob)</span>
+<span class="fc" id="L67">                .listener(jobExecutionStatusChangeListenerForDbToExcelJob)</span>
+<span class="fc" id="L68">                .build();</span>
+    }
+
+    @Bean
+    @JobScope
+    public JobExecutionStatusChangeListener jobExecutionStatusChangeListenerForDbToExcelJob(
+            @Value(&quot;#{jobParameters[T(com.aril.arilbatchsdk.config.ArilBatchConfigConstants).INPUT_PARAM]}&quot;) BatchJobParameterWrapper&lt;BatchDbToExcelJobParameter&gt; inputParam
+    ) {
+<span class="fc" id="L76">        return new JobExecutionStatusChangeListener(inputParam.getJobParameter().getJobExecutionChangeSubscriber());</span>
+    }
+
+    @Bean
+    @JobScope
+    @SuppressWarnings(&quot;unchecked&quot;)
+    public &lt;D extends BatchItem&gt; Step chunkStepForDbToExcelJob(JobRepository jobRepository,
+                                                               ArilBatchProperties arilBatchProperties,
+                                                               PlatformTransactionManager transactionManager,
+                                                               BatchJobSummaryService arilBatchJobSummaryService,
+                                                               @Value(&quot;#{jobParameters[T(com.aril.arilbatchsdk.config.ArilBatchConfigConstants).INPUT_PARAM]}&quot;) BatchJobParameterWrapper&lt;BatchDbToExcelJobParameter&gt; inputParam,
+                                                               @Value(&quot;#{jobParameters[T(com.aril.arilbatchsdk.config.ArilBatchConfigConstants).INPUT_PARAM_IDENTIFIER]}&quot;) String identifier) {
+<span class="fc" id="L88">        return new StepBuilder(CHUNK_STEP_NAME, jobRepository)</span>
+<span class="fc" id="L89">                .&lt;BatchItem, D&gt;chunk(inputParam.getJobParameter().getChunkSize(), transactionManager)</span>
+<span class="fc" id="L90">                .reader(readerForDbToExcelJob(inputParam))</span>
+<span class="fc" id="L91">                .processor((ItemProcessor&lt;? super BatchItem, ? extends D&gt;) processorForDbToExcelJob(inputParam))</span>
+<span class="fc" id="L92">                .writer(writerForDbToExcelJob(inputParam, identifier))</span>
+<span class="fc" id="L93">                .listener(new ChunkStepExecutionListener(BatchType.DB_TO_EXCEL, arilBatchProperties.getActiveModule(), inputParam.getJobParameter(), arilBatchJobSummaryService))</span>
+<span class="fc" id="L94">                .readerIsTransactionalQueue()//to create a reader that does not buffer items in Java</span>
+<span class="fc" id="L95">                .build();</span>
+    }
+
+    @Bean
+    @JobScope
+    public Step uploaderStepForDbToExcelJob(JobRepository jobRepository,
+                                            FileUploader fileUploader,
+                                            PlatformTransactionManager transactionManager,
+                                            @Value(&quot;#{jobParameters[T(com.aril.arilbatchsdk.config.ArilBatchConfigConstants).INPUT_PARAM]}&quot;) BatchJobParameterWrapper&lt;BatchDbToExcelJobParameter&gt; inputParam,
+                                            @Value(&quot;#{jobParameters[T(com.aril.arilbatchsdk.config.ArilBatchConfigConstants).INPUT_PARAM_IDENTIFIER]}&quot;) String identifier,
+                                            @Value(&quot;#{jobParameters[T(com.aril.arilbatchsdk.config.ArilBatchConfigConstants).JOB_EXPORT_FOLDER]}&quot;) String exportFolder) {
+<span class="fc" id="L106">        return new StepBuilder(FILE_UPLOADER_STEP_NAME, jobRepository)</span>
+<span class="fc" id="L107">                .tasklet(new ExcelFileUploaderTasklet(fileUploader, inputParam.getJobParameter().getExportBucket(), exportFolder, JobUtils.getExcelFilenameById(identifier)), transactionManager)</span>
+<span class="fc" id="L108">                .build();</span>
+    }
+
+    @Bean
+    @JobScope
+    public Step tmpFileDeleteStepForDbToExcelJob(JobRepository jobRepository,
+                                                 PlatformTransactionManager transactionManager,
+                                                 @Value(&quot;#{jobParameters[T(com.aril.arilbatchsdk.config.ArilBatchConfigConstants).INPUT_PARAM_IDENTIFIER]}&quot;) String identifier) {
+<span class="fc" id="L116">        return new StepBuilder(TMP_FILE_DELETE_STEP_NAME, jobRepository)</span>
+<span class="fc" id="L117">                .tasklet(new LocalFileDeleteTasklet(JobUtils.getExcelFilenameById(identifier)), transactionManager)</span>
+<span class="fc" id="L118">                .build();</span>
+    }
+
+    @Bean
+    @JobScope
+    public Step logStepForDbToExcelJob(JobRepository jobRepository,
+                                       FileUploader fileUploaderAdapter,
+                                       BatchJobSummaryService arilBatchJobSummaryService,
+                                       PlatformTransactionManager transactionManager,
+                                       @Value(&quot;#{jobParameters[T(com.aril.arilbatchsdk.config.ArilBatchConfigConstants).INPUT_PARAM]}&quot;) BatchJobParameterWrapper&lt;BatchDbToExcelJobParameter&gt; inputParam,
+                                       @Value(&quot;#{jobParameters[T(com.aril.arilbatchsdk.config.ArilBatchConfigConstants).INPUT_PARAM_IDENTIFIER]}&quot;) String identifier,
+                                       @Value(&quot;#{jobParameters[T(com.aril.arilbatchsdk.config.ArilBatchConfigConstants).JOB_EXPORT_FOLDER]}&quot;) String exportFolder) {
+<span class="fc" id="L130">        return new StepBuilder(LOG_STEP_NAME, jobRepository)</span>
+<span class="fc" id="L131">                .tasklet(new ExportMetadataTasklet(fileUploaderAdapter, arilBatchJobSummaryService, exportFolder, JobUtils.getExcelFilenameById(identifier), inputParam.getJobParameter().getExportBucket()), transactionManager)</span>
+<span class="fc" id="L132">                .build();</span>
+    }
+
+    @Bean
+    @StepScope
+    public &lt;T extends BatchItem&gt; RepositoryItemReader&lt;T&gt; readerForDbToExcelJob(
+            @Value(&quot;#{jobParameters[T(com.aril.arilbatchsdk.config.ArilBatchConfigConstants).INPUT_PARAM]}&quot;) BatchJobParameterWrapper&lt;BatchDbToExcelJobParameter&gt; inputParam) {
+<span class="fc" id="L139">        RepositoryItemReaderParameter repositoryItemReader = inputParam.getJobParameter().getRepositoryItemReader();</span>
+
+<span class="fc" id="L141">        return new RepositoryItemReaderBuilder&lt;T&gt;()</span>
+<span class="fc" id="L142">                .name(READER_NAME)</span>
+<span class="fc" id="L143">                .repository(repositoryItemReader.getRepository())</span>
+<span class="fc" id="L144">                .methodName(repositoryItemReader.getMethodName())</span>
+<span class="fc" id="L145">                .pageSize(inputParam.getJobParameter().getChunkSize())</span>
+<span class="fc" id="L146">                .arguments(repositoryItemReader.getArguments())</span>
+<span class="fc" id="L147">                .sorts(repositoryItemReader.getSorts())</span>
+<span class="fc" id="L148">                .build();</span>
+    }
+
+    @Bean
+    @StepScope
+    @SuppressWarnings(&quot;unchecked&quot;)
+    public &lt;T extends BatchItem&gt; ItemProcessor&lt;T, T&gt; processorForDbToExcelJob(
+            @Value(&quot;#{jobParameters[T(com.aril.arilbatchsdk.config.ArilBatchConfigConstants).INPUT_PARAM]}&quot;) BatchJobParameterWrapper&lt;BatchDbToExcelJobParameter&gt; inputParam) {
+<span class="pc bpc" id="L156" title="1 of 2 branches missed.">        if (inputParam.getJobParameter().getItemProcessor() != null) {</span>
+<span class="nc" id="L157">            return (ItemProcessor&lt;T, T&gt;) inputParam.getJobParameter().getItemProcessor();</span>
+        }
+<span class="fc" id="L159">        return item -&gt; item;</span>
+    }
+
+    @Bean
+    @StepScope
+    public &lt;D extends BatchItem&gt; ExcelStreamItemWriter&lt;D&gt; writerForDbToExcelJob(
+            @Value(&quot;#{jobParameters[T(com.aril.arilbatchsdk.config.ArilBatchConfigConstants).INPUT_PARAM]}&quot;) BatchJobParameterWrapper&lt;BatchDbToExcelJobParameter&gt; inputParam,
+            @Value(&quot;#{jobParameters[T(com.aril.arilbatchsdk.config.ArilBatchConfigConstants).INPUT_PARAM_IDENTIFIER]}&quot;) String identifier) {
+<span class="fc" id="L167">        return new ExcelStreamItemWriterBuilder&lt;D&gt;()</span>
+<span class="fc" id="L168">                .name(WRITER_NAME)</span>
+<span class="fc" id="L169">                .resource(new FileSystemResource(JobUtils.getExcelFilenameById(identifier)))</span>
+<span class="fc" id="L170">                .columnNames(inputParam.getJobParameter().getOutputFields())</span>
+<span class="fc" id="L171">                .headerCallback(new DefaultExcelStreamHeaderCallback(inputParam.getJobParameter().getHeaderColumns()))</span>
+<span class="fc" id="L172">                .thousandSeparatorFormat(inputParam.getJobParameter().getThousandSeparatorFormat())</span>
+<span class="fc" id="L173">                .build();</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.11.202310140853</span></div></body></html>

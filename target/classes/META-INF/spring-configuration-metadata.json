@@ -1,0 +1,23 @@
+{
+  "groups": [
+    {
+      "name": "aril.batch",
+      "type": "com.aril.arilbatchsdk.config.ArilBatchProperties",
+      "sourceType": "com.aril.arilbatchsdk.config.ArilBatchProperties"
+    }
+  ],
+  "properties": [
+    {
+      "name": "aril.batch.active-module",
+      "type": "com.aril.valhala.product.ModuleType",
+      "sourceType": "com.aril.arilbatchsdk.config.ArilBatchProperties"
+    },
+    {
+      "name": "aril.batch.table-prefix",
+      "type": "java.lang.String",
+      "sourceType": "com.aril.arilbatchsdk.config.ArilBatchProperties",
+      "defaultValue": "co_BATCH_"
+    }
+  ],
+  "hints": []
+}

@@ -1,0 +1,2 @@
+insert into co_batch_job_item_results (id, job_instance_id, idempotent_key, status, response, create_time, version) values (100, 100, '100', 'COMPLETED', JSON '{"key": "value"}', 20240101101010, 1);
+insert into co_batch_job_item_results (id, job_instance_id, idempotent_key, status, response, create_time, version) values (101, 100, '101', 'FAILED', JSON '{"key1": "value1"}', 20240101101010, 1);

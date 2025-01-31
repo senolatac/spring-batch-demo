@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>AbstractItemIdempotentWriter.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">aril-batch-sdk</a> &gt; <a href="index.source.html" class="el_package">com.aril.arilbatchsdk.core.item</a> &gt; <span class="el_source">AbstractItemIdempotentWriter.java</span></div><h1>AbstractItemIdempotentWriter.java</h1><pre class="source lang-java linenums">package com.aril.arilbatchsdk.core.item;
+
+import com.aril.arilbatchsdk.core.IdempotencyOptions;
+import com.aril.arilbatchsdk.core.item.support.IdempotentWriter;
+import com.aril.arilidempotentsdk.exception.ArilIdempotentException;
+import com.aril.valhala.batch.IdempotentBatchItem;
+import lombok.RequiredArgsConstructor;
+import lombok.Setter;
+import org.springframework.batch.core.StepExecution;
+import org.springframework.batch.core.annotation.BeforeStep;
+import org.springframework.batch.item.Chunk;
+import org.springframework.batch.item.ItemWriter;
+
+import java.util.concurrent.Callable;
+
+<span class="fc" id="L16">@Setter</span>
+<span class="fc" id="L17">@RequiredArgsConstructor</span>
+public abstract class AbstractItemIdempotentWriter&lt;T extends IdempotentBatchItem, C&gt; implements ItemWriter&lt;T&gt; {
+
+    protected String name;
+    protected IdempotencyOptions idempotencyOptions;
+    protected IdempotentWriter idempotentWriter;
+    protected StepExecution stepExecution;
+
+    @BeforeStep
+    public void setStepExecution(StepExecution stepExecution) {
+<span class="fc" id="L27">        this.stepExecution = stepExecution;</span>
+<span class="fc" id="L28">    }</span>
+
+    @Override
+    public void write(Chunk&lt;? extends T&gt; chunk) throws Exception {
+<span class="fc" id="L32">        Chunk&lt;? extends T&gt;.ChunkIterator chunkIterator = chunk.iterator();</span>
+<span class="fc bfc" id="L33" title="All 2 branches covered.">        while (chunkIterator.hasNext()) {</span>
+<span class="fc" id="L34">            T item = chunkIterator.next();</span>
+
+            //if not idempotent, then mark as skipped.
+            try {
+<span class="fc" id="L38">                call(item);</span>
+<span class="fc" id="L39">            } catch (ArilIdempotentException ex) {</span>
+<span class="fc" id="L40">                chunkIterator.remove(ex);</span>
+
+                //there is a known-issue on spring-batch about skip-count https://github.com/spring-projects/spring-batch/discussions/4507
+<span class="fc" id="L43">                this.stepExecution.setWriteSkipCount(this.stepExecution.getWriteSkipCount() + 1);</span>
+<span class="fc" id="L44">            }</span>
+<span class="fc" id="L45">        }</span>
+<span class="fc" id="L46">    }</span>
+
+    protected void call(T item) throws Exception {
+<span class="fc" id="L49">        Callable&lt;C&gt; callable = () -&gt; doWrite(item);</span>
+
+<span class="fc bfc" id="L51" title="All 2 branches covered.">        if (idempotencyOptions.isEnable()) {</span>
+<span class="fc" id="L52">            idempotentWriter.write(name, item, callable, idempotencyOptions);</span>
+        } else {
+<span class="fc" id="L54">            callable.call();</span>
+        }
+<span class="fc" id="L56">    }</span>
+
+    /***
+     * Default behaviour for idempotency is enabled.
+     */
+    protected void initIdempotencyOptions() {
+<span class="fc bfc" id="L62" title="All 2 branches covered.">        if (idempotencyOptions == null) {</span>
+<span class="fc" id="L63">            idempotencyOptions = IdempotencyOptions.builder()</span>
+<span class="fc" id="L64">                    .enable(true)</span>
+<span class="fc" id="L65">                    .build();</span>
+        }
+<span class="fc" id="L67">    }</span>
+
+    @SuppressWarnings(&quot;java:S112&quot;)
+    protected abstract C doWrite(T item) throws Exception;
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.11.202310140853</span></div></body></html>

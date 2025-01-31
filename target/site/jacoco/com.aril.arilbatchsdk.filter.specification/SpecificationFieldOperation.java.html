@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>SpecificationFieldOperation.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">aril-batch-sdk</a> &gt; <a href="index.source.html" class="el_package">com.aril.arilbatchsdk.filter.specification</a> &gt; <span class="el_source">SpecificationFieldOperation.java</span></div><h1>SpecificationFieldOperation.java</h1><pre class="source lang-java linenums">package com.aril.arilbatchsdk.filter.specification;
+
+import com.aril.arilbatchsdk.util.SpecificationUtils;
+import com.aril.valhala.hexagonal.UseCase;
+import jakarta.persistence.criteria.CriteriaBuilder;
+import jakarta.persistence.criteria.Join;
+import jakarta.persistence.criteria.Path;
+import jakarta.persistence.criteria.Predicate;
+import lombok.Getter;
+import lombok.RequiredArgsConstructor;
+
+import java.util.Map;
+import java.util.function.Function;
+
+<span class="fc" id="L15">@Getter</span>
+@RequiredArgsConstructor
+public enum SpecificationFieldOperation {
+<span class="fc" id="L18">    EQ {</span>
+        @Override
+        public &lt;T extends UseCase&gt; Predicate toPredicate(T useCase, Path&lt;?&gt; path, CriteriaBuilder criteriaBuilder, Function&lt;T, Object&gt; fieldGetFunction, Map&lt;String, Join&lt;?, ?&gt;&gt; joinMap) {
+<span class="fc" id="L21">            return SpecificationUtils.toEqualPredicate(criteriaBuilder, path, fieldGetFunction.apply(useCase));</span>
+        }
+    },
+<span class="fc" id="L24">    LIKE {</span>
+        @Override
+        @SuppressWarnings(&quot;unchecked&quot;)
+        public &lt;T extends UseCase&gt; Predicate toPredicate(T useCase, Path&lt;?&gt; path, CriteriaBuilder criteriaBuilder, Function&lt;T, Object&gt; fieldGetFunction, Map&lt;String, Join&lt;?, ?&gt;&gt; joinMap) {
+<span class="fc" id="L28">            return SpecificationUtils.toLikePredicate(criteriaBuilder, (Path&lt;String&gt;) path, fieldGetFunction.apply(useCase));</span>
+        }
+    },
+<span class="fc" id="L31">    GTE {</span>
+        @Override
+        @SuppressWarnings(&quot;unchecked&quot;)
+        public &lt;T extends UseCase&gt; Predicate toPredicate(T useCase, Path&lt;?&gt; path, CriteriaBuilder criteriaBuilder, Function&lt;T, Object&gt; fieldGetFunction, Map&lt;String, Join&lt;?, ?&gt;&gt; joinMap) {
+<span class="fc" id="L35">            return SpecificationUtils.toGTEPredicate(criteriaBuilder, (Path&lt;Long&gt;) path, fieldGetFunction.apply(useCase));</span>
+        }
+    },
+<span class="fc" id="L38">    LTE {</span>
+        @Override
+        @SuppressWarnings(&quot;unchecked&quot;)
+        public &lt;T extends UseCase&gt; Predicate toPredicate(T useCase, Path&lt;?&gt; path, CriteriaBuilder criteriaBuilder, Function&lt;T, Object&gt; fieldGetFunction, Map&lt;String, Join&lt;?, ?&gt;&gt; joinMap) {
+<span class="fc" id="L42">            return SpecificationUtils.toLTEPredicate(criteriaBuilder, (Path&lt;Long&gt;) path, fieldGetFunction.apply(useCase));</span>
+        }
+    };
+
+    public abstract &lt;T extends UseCase&gt; Predicate toPredicate(T useCase, Path&lt;?&gt; path, CriteriaBuilder criteriaBuilder, Function&lt;T, Object&gt; fieldGetFunction, Map&lt;String, Join&lt;?, ?&gt;&gt; joinMap);
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.11.202310140853</span></div></body></html>

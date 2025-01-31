@@ -1,0 +1,308 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>BaseBatchJobLauncherService.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">aril-batch-sdk</a> &gt; <a href="index.source.html" class="el_package">com.aril.arilbatchsdk.service</a> &gt; <span class="el_source">BaseBatchJobLauncherService.java</span></div><h1>BaseBatchJobLauncherService.java</h1><pre class="source lang-java linenums">package com.aril.arilbatchsdk.service;
+
+import com.aril.arilbatchsdk.config.ArilBatchConfigConstants;
+import com.aril.arilbatchsdk.core.parameter.*;
+import com.aril.arilbatchsdk.core.parameter.support.BatchJobParameterWrapper;
+import com.aril.arilbatchsdk.util.JobUtils;
+import org.springframework.batch.core.*;
+import org.springframework.batch.core.launch.JobLauncher;
+import org.springframework.batch.core.repository.JobExecutionAlreadyRunningException;
+import org.springframework.batch.core.repository.JobInstanceAlreadyCompleteException;
+import org.springframework.batch.core.repository.JobRestartException;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
+
+import java.util.UUID;
+
+public abstract class BaseBatchJobLauncherService {
+    protected final Job jobForCsvToDb;
+    protected final Job jobForCsvToKafka;
+    protected final Job jobForCsvToService;
+    protected final Job jobForDbToCsv;
+    protected final Job jobForDbToExcel;
+    protected final Job jobForDbToService;
+    protected final Job jobForServiceToExcel;
+    protected final Job jobForControllerToExcel;
+    protected final Job jobForControllerToCsv;
+    protected final Job jobForServiceToKafka;
+    protected final Job jobForDbToKafka;
+    protected final Job jobForExcelToKafka;
+    protected final Job jobForExcelToDb;
+    protected final Job jobForExcelToService;
+    protected final Job jobForServiceToDb;
+
+    @SuppressWarnings(&quot;java:S107&quot;)
+    protected BaseBatchJobLauncherService(
+            @Autowired(required = false) @Qualifier(ArilBatchConfigConstants.JOB_FOR_CSV_TO_DB) Job jobForCsvToDb,
+            @Autowired(required = false) @Qualifier(ArilBatchConfigConstants.JOB_FOR_CSV_TO_SERVICE) Job jobForCsvToService,
+            @Autowired(required = false) @Qualifier(ArilBatchConfigConstants.JOB_FOR_CSV_TO_KAFKA) Job jobForCsvToKafka,
+            @Autowired(required = false) @Qualifier(ArilBatchConfigConstants.JOB_FOR_DB_TO_CSV) Job jobForDbToCsv,
+            @Autowired(required = false) @Qualifier(ArilBatchConfigConstants.JOB_FOR_DB_TO_EXCEL) Job jobForDbToExcel,
+            @Autowired(required = false) @Qualifier(ArilBatchConfigConstants.JOB_FOR_DB_TO_SERVICE) Job jobForDbToService,
+            @Autowired(required = false) @Qualifier(ArilBatchConfigConstants.JOB_FOR_SERVICE_TO_EXCEL) Job jobForServiceToExcel,
+            @Autowired(required = false) @Qualifier(ArilBatchConfigConstants.JOB_FOR_CONTROLLER_TO_EXCEL) Job jobForControllerToExcel,
+            @Autowired(required = false) @Qualifier(ArilBatchConfigConstants.JOB_FOR_CONTROLLER_TO_CSV) Job jobForControllerToCsv,
+            @Autowired(required = false) @Qualifier(ArilBatchConfigConstants.JOB_FOR_SERVICE_TO_KAFKA) Job jobForServiceToKafka,
+            @Autowired(required = false) @Qualifier(ArilBatchConfigConstants.JOB_FOR_DB_TO_KAFKA) Job jobForDbToKafka,
+            @Autowired(required = false) @Qualifier(ArilBatchConfigConstants.JOB_FOR_EXCEL_TO_KAFKA) Job jobForExcelToKafka,
+            @Autowired(required = false) @Qualifier(ArilBatchConfigConstants.JOB_FOR_EXCEL_TO_DB) Job jobForExcelToDb,
+            @Autowired(required = false) @Qualifier(ArilBatchConfigConstants.JOB_FOR_EXCEL_TO_SERVICE) Job jobForExcelToService,
+<span class="fc" id="L50">            @Autowired(required = false) @Qualifier(ArilBatchConfigConstants.JOB_FOR_SERVICE_TO_DB) Job jobForServiceToDb) {</span>
+<span class="fc" id="L51">        this.jobForCsvToDb = jobForCsvToDb;</span>
+<span class="fc" id="L52">        this.jobForCsvToService = jobForCsvToService;</span>
+<span class="fc" id="L53">        this.jobForCsvToKafka = jobForCsvToKafka;</span>
+<span class="fc" id="L54">        this.jobForDbToCsv = jobForDbToCsv;</span>
+<span class="fc" id="L55">        this.jobForDbToExcel = jobForDbToExcel;</span>
+<span class="fc" id="L56">        this.jobForDbToService = jobForDbToService;</span>
+<span class="fc" id="L57">        this.jobForServiceToExcel = jobForServiceToExcel;</span>
+<span class="fc" id="L58">        this.jobForControllerToExcel = jobForControllerToExcel;</span>
+<span class="fc" id="L59">        this.jobForControllerToCsv = jobForControllerToCsv;</span>
+<span class="fc" id="L60">        this.jobForServiceToKafka = jobForServiceToKafka;</span>
+<span class="fc" id="L61">        this.jobForDbToKafka = jobForDbToKafka;</span>
+<span class="fc" id="L62">        this.jobForExcelToKafka = jobForExcelToKafka;</span>
+<span class="fc" id="L63">        this.jobForExcelToDb = jobForExcelToDb;</span>
+<span class="fc" id="L64">        this.jobForExcelToService = jobForExcelToService;</span>
+<span class="fc" id="L65">        this.jobForServiceToDb = jobForServiceToDb;</span>
+<span class="fc" id="L66">    }</span>
+
+    public JobExecution dbToCsvCall(BatchDbToCsvJobParameter param) throws JobInstanceAlreadyCompleteException, JobExecutionAlreadyRunningException, JobParametersInvalidException, JobRestartException {
+<span class="nc" id="L69">        return dbToCsvCall(UUID.randomUUID().toString(), param);</span>
+    }
+
+    public JobExecution dbToCsvCall(String identifier, BatchDbToCsvJobParameter param) throws JobInstanceAlreadyCompleteException, JobExecutionAlreadyRunningException, JobParametersInvalidException, JobRestartException {
+<span class="fc" id="L73">        return jobLauncher().run(jobForDbToCsv, buildParamsForBatchDbToCsv(identifier, param));</span>
+    }
+
+    public JobExecution dbToExcelCall(BatchDbToExcelJobParameter param) throws JobInstanceAlreadyCompleteException, JobExecutionAlreadyRunningException, JobParametersInvalidException, JobRestartException {
+<span class="nc" id="L77">        return dbToExcelCall(UUID.randomUUID().toString(), param);</span>
+    }
+
+    public JobExecution dbToExcelCall(String identifier, BatchDbToExcelJobParameter param) throws JobInstanceAlreadyCompleteException, JobExecutionAlreadyRunningException, JobParametersInvalidException, JobRestartException {
+<span class="fc" id="L81">        return jobLauncher().run(jobForDbToExcel, buildParamsForBatchDbToExcel(identifier, param));</span>
+    }
+
+    public JobExecution dbToServiceCall(BatchDbToServiceJobParameter param) throws JobInstanceAlreadyCompleteException, JobExecutionAlreadyRunningException, JobParametersInvalidException, JobRestartException {
+<span class="nc" id="L85">        return dbToServiceCall(UUID.randomUUID().toString(), param);</span>
+    }
+
+    public JobExecution dbToServiceCall(String identifier, BatchDbToServiceJobParameter param) throws JobInstanceAlreadyCompleteException, JobExecutionAlreadyRunningException, JobParametersInvalidException, JobRestartException {
+<span class="fc" id="L89">        return jobLauncher().run(jobForDbToService, buildParamsForBatchDbToService(identifier, param));</span>
+    }
+
+    public JobExecution serviceToExcelCall(BatchServiceToExcelJobParameter param) throws JobInstanceAlreadyCompleteException, JobExecutionAlreadyRunningException, JobParametersInvalidException, JobRestartException {
+<span class="nc" id="L93">        return serviceToExcelCall(UUID.randomUUID().toString(), param);</span>
+    }
+
+    public JobExecution serviceToExcelCall(String identifier, BatchServiceToExcelJobParameter param) throws JobInstanceAlreadyCompleteException, JobExecutionAlreadyRunningException, JobParametersInvalidException, JobRestartException {
+<span class="fc" id="L97">        return jobLauncher().run(jobForServiceToExcel, buildParamsForBatchServiceToExcel(identifier, param));</span>
+    }
+
+    public JobExecution serviceToDbCall(BatchServiceToDbJobParameter param) throws JobInstanceAlreadyCompleteException, JobExecutionAlreadyRunningException, JobParametersInvalidException, JobRestartException {
+<span class="nc" id="L101">        return serviceToDbCall(UUID.randomUUID().toString(), param);</span>
+    }
+
+    public JobExecution serviceToDbCall(String identifier, BatchServiceToDbJobParameter param) throws JobInstanceAlreadyCompleteException, JobExecutionAlreadyRunningException, JobParametersInvalidException, JobRestartException {
+<span class="fc" id="L105">        return jobLauncher().run(jobForServiceToDb, buildParamsForBatchServiceToDb(identifier, param));</span>
+    }
+
+    public JobExecution controllerToExcelCall(BatchControllerToExcelJobParameter param) throws JobInstanceAlreadyCompleteException, JobExecutionAlreadyRunningException, JobParametersInvalidException, JobRestartException {
+<span class="nc" id="L109">        return controllerToExcelCall(UUID.randomUUID().toString(), param);</span>
+    }
+
+    public JobExecution controllerToExcelCall(String identifier, BatchControllerToExcelJobParameter param) throws JobInstanceAlreadyCompleteException, JobExecutionAlreadyRunningException, JobParametersInvalidException, JobRestartException {
+<span class="fc" id="L113">        return jobLauncher().run(jobForControllerToExcel, buildParamsForBatchControllerToExcel(identifier, param));</span>
+    }
+
+    public JobExecution controllerToCsvCall(BatchControllerToCsvJobParameter param) throws JobInstanceAlreadyCompleteException, JobExecutionAlreadyRunningException, JobParametersInvalidException, JobRestartException {
+<span class="nc" id="L117">        return controllerToCsvCall(UUID.randomUUID().toString(), param);</span>
+    }
+
+    public JobExecution controllerToCsvCall(String identifier, BatchControllerToCsvJobParameter param) throws JobInstanceAlreadyCompleteException, JobExecutionAlreadyRunningException, JobParametersInvalidException, JobRestartException {
+<span class="fc" id="L121">        return jobLauncher().run(jobForControllerToCsv, buildParamsForBatchControllerToCsv(identifier, param));</span>
+    }
+
+    public JobExecution serviceToKafkaCall(BatchServiceToKafkaJobParameter param) throws JobInstanceAlreadyCompleteException, JobExecutionAlreadyRunningException, JobParametersInvalidException, JobRestartException {
+<span class="nc" id="L125">        return serviceToKafkaCall(UUID.randomUUID().toString(), param);</span>
+    }
+
+    public JobExecution serviceToKafkaCall(String identifier, BatchServiceToKafkaJobParameter param) throws JobInstanceAlreadyCompleteException, JobExecutionAlreadyRunningException, JobParametersInvalidException, JobRestartException {
+<span class="fc" id="L129">        return jobLauncher().run(jobForServiceToKafka, buildParamsForBatchServiceToKafka(identifier, param));</span>
+    }
+
+    public JobExecution dbToKafkaCall(BatchDbToKafkaJobParameter param) throws JobInstanceAlreadyCompleteException, JobExecutionAlreadyRunningException, JobParametersInvalidException, JobRestartException {
+<span class="nc" id="L133">        return dbToKafkaCall(UUID.randomUUID().toString(), param);</span>
+    }
+
+    public JobExecution dbToKafkaCall(String identifier, BatchDbToKafkaJobParameter param) throws JobInstanceAlreadyCompleteException, JobExecutionAlreadyRunningException, JobParametersInvalidException, JobRestartException {
+<span class="fc" id="L137">        return jobLauncher().run(jobForDbToKafka, buildParamsForBatchDbToKafka(identifier, param));</span>
+    }
+
+    public JobExecution csvToDbCall(BatchCsvToDbJobParameter param) throws JobInstanceAlreadyCompleteException, JobExecutionAlreadyRunningException, JobParametersInvalidException, JobRestartException {
+<span class="nc" id="L141">        return csvToDbCall(UUID.randomUUID().toString(), param);</span>
+    }
+
+    public JobExecution csvToDbCall(String identifier, BatchCsvToDbJobParameter param) throws JobInstanceAlreadyCompleteException, JobExecutionAlreadyRunningException, JobParametersInvalidException, JobRestartException {
+<span class="fc" id="L145">        return jobLauncher().run(jobForCsvToDb, buildParamsForBatchCsvToDb(identifier, param));</span>
+    }
+
+    public JobExecution csvToServiceCall(BatchCsvToServiceJobParameter param) throws JobInstanceAlreadyCompleteException, JobExecutionAlreadyRunningException, JobParametersInvalidException, JobRestartException {
+<span class="nc" id="L149">        return csvToServiceCall(UUID.randomUUID().toString(), param);</span>
+    }
+
+    public JobExecution csvToServiceCall(String identifier, BatchCsvToServiceJobParameter param) throws JobInstanceAlreadyCompleteException, JobExecutionAlreadyRunningException, JobParametersInvalidException, JobRestartException {
+<span class="fc" id="L153">        return jobLauncher().run(jobForCsvToService, buildParamsForBatchCsvToService(identifier, param));</span>
+    }
+
+    public JobExecution csvToKafkaCall(BatchCsvToKafkaJobParameter param) throws JobInstanceAlreadyCompleteException, JobExecutionAlreadyRunningException, JobParametersInvalidException, JobRestartException {
+<span class="nc" id="L157">        return csvToKafkaCall(UUID.randomUUID().toString(), param);</span>
+    }
+
+    public JobExecution csvToKafkaCall(String identifier, BatchCsvToKafkaJobParameter param) throws JobInstanceAlreadyCompleteException, JobExecutionAlreadyRunningException, JobParametersInvalidException, JobRestartException {
+<span class="fc" id="L161">        return jobLauncher().run(jobForCsvToKafka, buildParamsForBatchCsvToKafka(identifier, param));</span>
+    }
+
+    public JobExecution excelToKafkaCall(BatchExcelToKafkaJobParameter param) throws JobInstanceAlreadyCompleteException, JobExecutionAlreadyRunningException, JobParametersInvalidException, JobRestartException {
+<span class="nc" id="L165">        return excelToKafkaCall(UUID.randomUUID().toString(), param);</span>
+    }
+
+    public JobExecution excelToKafkaCall(String identifier, BatchExcelToKafkaJobParameter param) throws JobInstanceAlreadyCompleteException, JobExecutionAlreadyRunningException, JobParametersInvalidException, JobRestartException {
+<span class="fc" id="L169">        return jobLauncher().run(jobForExcelToKafka, buildParamsForBatchExcelToKafka(identifier, param));</span>
+    }
+
+    public JobExecution excelToDbCall(BatchExcelToDbJobParameter param) throws JobInstanceAlreadyCompleteException, JobExecutionAlreadyRunningException, JobParametersInvalidException, JobRestartException {
+<span class="nc" id="L173">        return excelToDbCall(UUID.randomUUID().toString(), param);</span>
+    }
+
+    public JobExecution excelToDbCall(String identifier, BatchExcelToDbJobParameter param) throws JobInstanceAlreadyCompleteException, JobExecutionAlreadyRunningException, JobParametersInvalidException, JobRestartException {
+<span class="fc" id="L177">        return jobLauncher().run(jobForExcelToDb, buildParamsForBatchExcelToDb(identifier, param));</span>
+    }
+
+    public JobExecution excelToServiceCall(BatchExcelToServiceJobParameter param) throws JobInstanceAlreadyCompleteException, JobExecutionAlreadyRunningException, JobParametersInvalidException, JobRestartException {
+<span class="nc" id="L181">        return excelToServiceCall(UUID.randomUUID().toString(), param);</span>
+    }
+
+    public JobExecution excelToServiceCall(String identifier, BatchExcelToServiceJobParameter param) throws JobInstanceAlreadyCompleteException, JobExecutionAlreadyRunningException, JobParametersInvalidException, JobRestartException {
+<span class="fc" id="L185">        return jobLauncher().run(jobForExcelToService, buildParamsForBatchExcelToService(identifier, param));</span>
+    }
+
+    protected abstract JobLauncher jobLauncher();
+
+    protected JobParameters buildParamsForBatchDbToCsv(String identifier, BatchDbToCsvJobParameter param) {
+<span class="fc" id="L191">        return new JobParametersBuilder()</span>
+<span class="fc" id="L192">                .addString(ArilBatchConfigConstants.INPUT_PARAM_IDENTIFIER, identifier)</span>
+<span class="fc" id="L193">                .addString(ArilBatchConfigConstants.JOB_EXPORT_FOLDER, JobUtils.getLatestFolder(), false)</span>
+<span class="fc" id="L194">                .addJobParameter(ArilBatchConfigConstants.INPUT_PARAM, createJobParamWrapper(param))</span>
+<span class="fc" id="L195">                .toJobParameters();</span>
+    }
+
+    protected JobParameters buildParamsForBatchDbToExcel(String identifier, BatchDbToExcelJobParameter param) {
+<span class="fc" id="L199">        return new JobParametersBuilder()</span>
+<span class="fc" id="L200">                .addString(ArilBatchConfigConstants.INPUT_PARAM_IDENTIFIER, identifier)</span>
+<span class="fc" id="L201">                .addString(ArilBatchConfigConstants.JOB_EXPORT_FOLDER, JobUtils.getLatestFolder(), false)</span>
+<span class="fc" id="L202">                .addJobParameter(ArilBatchConfigConstants.INPUT_PARAM, createJobParamWrapper(param))</span>
+<span class="fc" id="L203">                .toJobParameters();</span>
+    }
+
+    protected JobParameters buildParamsForBatchDbToService(String identifier, BatchDbToServiceJobParameter param) {
+<span class="fc" id="L207">        return new JobParametersBuilder()</span>
+<span class="fc" id="L208">                .addString(ArilBatchConfigConstants.INPUT_PARAM_IDENTIFIER, identifier)</span>
+<span class="fc" id="L209">                .addString(ArilBatchConfigConstants.JOB_EXPORT_FOLDER, JobUtils.getLatestFolder(), false)</span>
+<span class="fc" id="L210">                .addJobParameter(ArilBatchConfigConstants.INPUT_PARAM, createJobParamWrapper(param))</span>
+<span class="fc" id="L211">                .toJobParameters();</span>
+    }
+
+    protected JobParameters buildParamsForBatchServiceToDb(String identifier, BatchServiceToDbJobParameter param) {
+<span class="fc" id="L215">        return new JobParametersBuilder()</span>
+<span class="fc" id="L216">                .addString(ArilBatchConfigConstants.INPUT_PARAM_IDENTIFIER, identifier)</span>
+<span class="fc" id="L217">                .addJobParameter(ArilBatchConfigConstants.INPUT_PARAM, createJobParamWrapper(param))</span>
+<span class="fc" id="L218">                .toJobParameters();</span>
+    }
+
+    protected JobParameters buildParamsForBatchServiceToExcel(String identifier, BatchServiceToExcelJobParameter param) {
+<span class="fc" id="L222">        return new JobParametersBuilder()</span>
+<span class="fc" id="L223">                .addString(ArilBatchConfigConstants.INPUT_PARAM_IDENTIFIER, identifier)</span>
+<span class="fc" id="L224">                .addString(ArilBatchConfigConstants.JOB_EXPORT_FOLDER, JobUtils.getLatestFolder(), false)</span>
+<span class="fc" id="L225">                .addJobParameter(ArilBatchConfigConstants.INPUT_PARAM, createJobParamWrapper(param))</span>
+<span class="fc" id="L226">                .toJobParameters();</span>
+    }
+
+    protected JobParameters buildParamsForBatchControllerToExcel(String identifier, BatchControllerToExcelJobParameter param) {
+<span class="fc" id="L230">        return new JobParametersBuilder()</span>
+<span class="fc" id="L231">                .addString(ArilBatchConfigConstants.INPUT_PARAM_IDENTIFIER, identifier)</span>
+<span class="fc" id="L232">                .addString(ArilBatchConfigConstants.JOB_EXPORT_FOLDER, JobUtils.getLatestFolder(), false)</span>
+<span class="fc" id="L233">                .addJobParameter(ArilBatchConfigConstants.INPUT_PARAM, createJobParamWrapper(param))</span>
+<span class="fc" id="L234">                .toJobParameters();</span>
+    }
+
+    protected JobParameters buildParamsForBatchControllerToCsv(String identifier, BatchControllerToCsvJobParameter param) {
+<span class="fc" id="L238">        return new JobParametersBuilder()</span>
+<span class="fc" id="L239">                .addString(ArilBatchConfigConstants.INPUT_PARAM_IDENTIFIER, identifier)</span>
+<span class="fc" id="L240">                .addString(ArilBatchConfigConstants.JOB_EXPORT_FOLDER, JobUtils.getLatestFolder(), false)</span>
+<span class="fc" id="L241">                .addJobParameter(ArilBatchConfigConstants.INPUT_PARAM, createJobParamWrapper(param))</span>
+<span class="fc" id="L242">                .toJobParameters();</span>
+    }
+
+    protected JobParameters buildParamsForBatchServiceToKafka(String identifier, BatchServiceToKafkaJobParameter param) {
+<span class="fc" id="L246">        return new JobParametersBuilder()</span>
+<span class="fc" id="L247">                .addString(ArilBatchConfigConstants.INPUT_PARAM_IDENTIFIER, identifier)</span>
+<span class="fc" id="L248">                .addJobParameter(ArilBatchConfigConstants.INPUT_PARAM, createJobParamWrapper(param))</span>
+<span class="fc" id="L249">                .toJobParameters();</span>
+    }
+
+    protected JobParameters buildParamsForBatchDbToKafka(String identifier, BatchDbToKafkaJobParameter param) {
+<span class="fc" id="L253">        return new JobParametersBuilder()</span>
+<span class="fc" id="L254">                .addString(ArilBatchConfigConstants.INPUT_PARAM_IDENTIFIER, identifier)</span>
+<span class="fc" id="L255">                .addJobParameter(ArilBatchConfigConstants.INPUT_PARAM, createJobParamWrapper(param))</span>
+<span class="fc" id="L256">                .toJobParameters();</span>
+    }
+
+    protected JobParameters buildParamsForBatchCsvToDb(String identifier, BatchCsvToDbJobParameter param) {
+<span class="fc" id="L260">        return new JobParametersBuilder()</span>
+<span class="fc" id="L261">                .addString(ArilBatchConfigConstants.INPUT_PARAM_IDENTIFIER, identifier)</span>
+<span class="fc" id="L262">                .addJobParameter(ArilBatchConfigConstants.INPUT_PARAM, createJobParamWrapper(param))</span>
+<span class="fc" id="L263">                .toJobParameters();</span>
+    }
+
+    protected JobParameters buildParamsForBatchCsvToService(String identifier, BatchCsvToServiceJobParameter param) {
+<span class="fc" id="L267">        return new JobParametersBuilder()</span>
+<span class="fc" id="L268">                .addString(ArilBatchConfigConstants.INPUT_PARAM_IDENTIFIER, identifier)</span>
+<span class="fc" id="L269">                .addString(ArilBatchConfigConstants.JOB_EXPORT_FOLDER, JobUtils.getLatestFolder(), false)</span>
+<span class="fc" id="L270">                .addJobParameter(ArilBatchConfigConstants.INPUT_PARAM, createJobParamWrapper(param))</span>
+<span class="fc" id="L271">                .toJobParameters();</span>
+    }
+
+    protected JobParameters buildParamsForBatchCsvToKafka(String identifier, BatchCsvToKafkaJobParameter param) {
+<span class="fc" id="L275">        return new JobParametersBuilder()</span>
+<span class="fc" id="L276">                .addString(ArilBatchConfigConstants.INPUT_PARAM_IDENTIFIER, identifier)</span>
+<span class="fc" id="L277">                .addJobParameter(ArilBatchConfigConstants.INPUT_PARAM, createJobParamWrapper(param))</span>
+<span class="fc" id="L278">                .toJobParameters();</span>
+    }
+
+    protected JobParameters buildParamsForBatchExcelToKafka(String identifier, BatchExcelToKafkaJobParameter param) {
+<span class="fc" id="L282">        return new JobParametersBuilder()</span>
+<span class="fc" id="L283">                .addString(ArilBatchConfigConstants.INPUT_PARAM_IDENTIFIER, identifier)</span>
+<span class="fc" id="L284">                .addJobParameter(ArilBatchConfigConstants.INPUT_PARAM, createJobParamWrapper(param))</span>
+<span class="fc" id="L285">                .toJobParameters();</span>
+    }
+
+    protected JobParameters buildParamsForBatchExcelToDb(String identifier, BatchExcelToDbJobParameter param) {
+<span class="fc" id="L289">        return new JobParametersBuilder()</span>
+<span class="fc" id="L290">                .addString(ArilBatchConfigConstants.INPUT_PARAM_IDENTIFIER, identifier)</span>
+<span class="fc" id="L291">                .addJobParameter(ArilBatchConfigConstants.INPUT_PARAM, createJobParamWrapper(param))</span>
+<span class="fc" id="L292">                .toJobParameters();</span>
+    }
+
+    protected JobParameters buildParamsForBatchExcelToService(String identifier, BatchExcelToServiceJobParameter param) {
+<span class="fc" id="L296">        return new JobParametersBuilder()</span>
+<span class="fc" id="L297">                .addString(ArilBatchConfigConstants.INPUT_PARAM_IDENTIFIER, identifier)</span>
+<span class="fc" id="L298">                .addString(ArilBatchConfigConstants.JOB_EXPORT_FOLDER, JobUtils.getLatestFolder(), false)</span>
+<span class="fc" id="L299">                .addJobParameter(ArilBatchConfigConstants.INPUT_PARAM, createJobParamWrapper(param))</span>
+<span class="fc" id="L300">                .toJobParameters();</span>
+    }
+
+    @SuppressWarnings({&quot;unchecked&quot;, &quot;java:S3740&quot;, &quot;rawtypes&quot;})
+    private &lt;T extends BaseBatchJobParameter&gt; JobParameter&lt;BatchJobParameterWrapper&lt;T&gt;&gt; createJobParamWrapper(T param) {
+<span class="fc" id="L305">        return new JobParameter(new BatchJobParameterWrapper&lt;&gt;(param), BatchJobParameterWrapper.class, false);</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.11.202310140853</span></div></body></html>

@@ -1,0 +1,2 @@
+insert into co_batch_job_result_summaries(job_instance_id, success_count, fail_count, create_time, last_updated, version) VALUES (200, 10, 20, 20240101101010, 20240101101010, 1);
+insert into co_batch_job_result_summaries(job_instance_id, success_count, fail_count, create_time, last_updated, version) VALUES (201, 3, 4, 20240101101010, 20240101101010, 1);
