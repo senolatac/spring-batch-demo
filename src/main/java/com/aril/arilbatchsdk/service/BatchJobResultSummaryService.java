@@ -2,7 +2,7 @@ package com.aril.arilbatchsdk.service;
 
 import com.aril.arilbatchsdk.entity.BatchJobResultSummary;
 import com.aril.arilbatchsdk.entity.BatchJobSummary;
-import com.aril.arilbatchsdk.repository.BatchJobResultSummaryRepository;
+import com.aril.arilbatchsdk.jpa.repository.BatchJobResultSummaryRepository;
 import com.aril.valhala.util.date.DateUtils;
 import lombok.RequiredArgsConstructor;
 import org.springframework.batch.core.BatchStatus;

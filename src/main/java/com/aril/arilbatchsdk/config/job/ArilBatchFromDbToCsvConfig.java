@@ -36,7 +36,7 @@ import org.springframework.transaction.PlatformTransactionManager;
 @Lazy
 @Configuration
 @ConditionalOnClass(JpaRepository.class)
-public class ArilBatchFromDbToCsvConfig extends AbstractArilBatchConfig {
+public class ArilBatchFromDbToCsvConfig extends BaseArilBatchConfig {
 
     public static final String READER_NAME = "readerForDbToCsvJob";
     private static final String WRITER_NAME = "writerForDbToCsvJob";

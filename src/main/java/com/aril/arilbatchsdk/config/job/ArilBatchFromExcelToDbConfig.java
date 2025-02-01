@@ -38,7 +38,7 @@ import org.springframework.transaction.PlatformTransactionManager;
 @Configuration
 @EnableArilIdempotent
 @ConditionalOnClass({JpaRepository.class, ArilIdempotentTemplate.class})
-public class ArilBatchFromExcelToDbConfig extends AbstractArilBatchConfig {
+public class ArilBatchFromExcelToDbConfig extends BaseArilBatchIdempotentConfig {
 
     public static final String READER_NAME = "readerForExcelToDbJob";
     public static final String CHUNK_STEP_NAME = "chunkStepForExcelToDbJob";

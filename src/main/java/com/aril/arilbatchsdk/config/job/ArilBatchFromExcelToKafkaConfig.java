@@ -38,7 +38,6 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Lazy;
-import org.springframework.core.io.FileSystemResource;
 import org.springframework.retry.policy.NeverRetryPolicy;
 import org.springframework.transaction.PlatformTransactionManager;
 
@@ -47,7 +46,7 @@ import org.springframework.transaction.PlatformTransactionManager;
 @EnableArilKafka
 @EnableArilIdempotent
 @ConditionalOnClass({ArilKafkaTemplate.class, ArilIdempotentTemplate.class})
-public class ArilBatchFromExcelToKafkaConfig extends AbstractArilBatchConfig {
+public class ArilBatchFromExcelToKafkaConfig extends BaseArilBatchKafkaConfig {
 
     public static final String READER_NAME = "readerForExcelToKafkaJob";
     public static final String CHUNK_STEP_NAME = "chunkStepForExcelToKafkaJob";
@@ -117,8 +116,7 @@ public class ArilBatchFromExcelToKafkaConfig extends AbstractArilBatchConfig {
     public <T extends IdempotentBatchItem> StreamingXlsxItemReader<T> readerForExcelToKafkaJob(
             @Value("#{jobParameters[T(com.aril.arilbatchsdk.config.ArilBatchConfigConstants).INPUT_PARAM]}") BatchJobParameterWrapper<BatchExcelToKafkaJobParameter> inputParam) throws Exception {
         BatchExcelToKafkaJobParameter jobParameter = inputParam.getJobParameter();
-        FileSystemResource resource = new FileSystemResource(jobParameter.getInputFilePath());
-        return configureStreamingXlsxItemReader(READER_NAME, resource, jobParameter.getInputFields(), jobParameter.getItemInputClass());
+        return configureStreamingXlsxItemReader(READER_NAME, jobParameter.getResource(), jobParameter.getInputFields(), jobParameter.getItemInputClass());
     }
 
     @Bean

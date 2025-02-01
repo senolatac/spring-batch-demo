@@ -3,10 +3,11 @@ package com.aril.arilbatchsdk.service;
 import com.aril.arilbatchsdk.core.result.BatchJobItemErrorDetail;
 import com.aril.arilbatchsdk.core.result.BatchJobItemResultParameter;
 import com.aril.arilbatchsdk.entity.BatchJobItemResult;
-import com.aril.arilbatchsdk.repository.BatchJobItemResultRepository;
-import com.aril.arilbatchsdk.repository.projection.StatusCounterProjection;
+import com.aril.arilbatchsdk.jpa.repository.BatchJobItemResultRepository;
+import com.aril.arilbatchsdk.jpa.projection.StatusCounterProjection;
 import com.aril.arilbatchsdk.util.GsonUtils;
 import com.aril.valhala.batch.BatchItemResult;
+import com.aril.valhala.exception.ValhalaException;
 import com.aril.valhala.util.date.DateUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -58,7 +59,7 @@ public class BatchJobItemResultService {
 
                 return buildCompletedResult(response, resultParameter);
             } catch (Exception ex) {
-                log.error("Exception occurred on job-item-result-execution", ex);
+                log.error("Exception occurred on job-item-result-execution on idempotent-key: {} retry: {}", resultParameter.getIdempotentKey(), currentRetry, ex);
 
                 if (currentRetry == resultParameter.getRetry()) {
                     return buildFailedResult(ex, resultParameter);
@@ -108,6 +109,9 @@ public class BatchJobItemResultService {
         String error = ex.getMessage();
         if (StringUtils.hasText(resultParameter.getErrorMessage())) {
             error = resultParameter.getErrorMessage();
+        }
+        if (ex instanceof ValhalaException valhalaException) {
+            return messageSourceService.getMessage(valhalaException.getKey(), valhalaException.getArgs());
         }
         return messageSourceService.getMessage(error);
     }

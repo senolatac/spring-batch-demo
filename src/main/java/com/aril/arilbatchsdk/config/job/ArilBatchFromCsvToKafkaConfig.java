@@ -46,7 +46,7 @@ import org.springframework.transaction.PlatformTransactionManager;
 @EnableArilKafka
 @EnableArilIdempotent
 @ConditionalOnClass({ArilKafkaTemplate.class, ArilIdempotentTemplate.class})
-public class ArilBatchFromCsvToKafkaConfig extends AbstractArilBatchConfig {
+public class ArilBatchFromCsvToKafkaConfig extends BaseArilBatchKafkaConfig {
 
     public static final String READER_NAME = "readerForCsvToKafkaJob";
     public static final String CHUNK_STEP_NAME = "chunkStepForCsvToKafkaJob";
@@ -116,7 +116,7 @@ public class ArilBatchFromCsvToKafkaConfig extends AbstractArilBatchConfig {
     public <T extends IdempotentBatchItem> FlatFileItemReader<T> readerForCsvToKafkaJob(
             @Value("#{jobParameters[T(com.aril.arilbatchsdk.config.ArilBatchConfigConstants).INPUT_PARAM]}") BatchJobParameterWrapper<BatchCsvToKafkaJobParameter> inputParam) throws Exception {
         BatchCsvToKafkaJobParameter jobParameter = inputParam.getJobParameter();
-        return configureFlatFileItemReader(READER_NAME, jobParameter.getResource(), jobParameter.getInputFields(), jobParameter.getInputItemClass());
+        return configureFlatFileItemReader(READER_NAME, jobParameter.getResource(), jobParameter.getInputFields(), jobParameter.getItemInputClass());
     }
 
     @Bean

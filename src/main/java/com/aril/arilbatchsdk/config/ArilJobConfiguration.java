@@ -4,6 +4,8 @@ import com.aril.arilbatchsdk.core.converter.BatchJobParameterWrapperToStringConv
 import com.aril.arilbatchsdk.core.converter.StringToBatchJobParameterWrapperConverter;
 import com.aril.arilbatchsdk.core.explore.ArilJobExplorer;
 import com.aril.arilbatchsdk.core.listener.IdempotentJobEventProcessorListener;
+import com.aril.arilbatchsdk.core.parameter.BaseBatchJobParameter;
+import com.aril.arilbatchsdk.core.parameter.support.BatchJobParameterWrapper;
 import com.aril.arilbatchsdk.core.processor.IdempotentJobEventProcessor;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
@@ -14,6 +16,7 @@ import org.springframework.batch.core.converter.*;
 import org.springframework.batch.core.launch.JobLauncher;
 import org.springframework.batch.core.launch.support.TaskExecutorJobLauncher;
 import org.springframework.batch.core.repository.JobRepository;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -49,8 +52,10 @@ public class ArilJobConfiguration extends DefaultBatchConfiguration {
 
     @Bean
     @StepScope
-    public IdempotentJobEventProcessor idempotentJobEventProcessor() {
-        return new IdempotentJobEventProcessor();
+    public IdempotentJobEventProcessor idempotentJobEventProcessor(
+            @Value("#{jobParameters[T(com.aril.arilbatchsdk.config.ArilBatchConfigConstants).INPUT_PARAM]}") BatchJobParameterWrapper<? extends BaseBatchJobParameter> inputParam
+    ) {
+        return new IdempotentJobEventProcessor(inputParam.getJobParameter().getJobOwner());
     }
 
     @Bean

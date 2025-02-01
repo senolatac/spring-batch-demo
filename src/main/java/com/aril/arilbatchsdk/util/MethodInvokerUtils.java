@@ -25,7 +25,7 @@ public final class MethodInvokerUtils {
         try {
             return invoker.invoke();
         } catch (InvocationTargetException e) {
-            if (e.getCause() instanceof Exception exception) {
+            if (e.getCause() != null && e.getCause() instanceof Exception exception) {
                 throw (Exception) exception.getCause();
             } else {
                 throw new AbstractMethodInvokingDelegator.InvocationTargetThrowableWrapper(e.getCause());

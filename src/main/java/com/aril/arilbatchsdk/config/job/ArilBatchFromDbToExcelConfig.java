@@ -36,7 +36,7 @@ import org.springframework.transaction.PlatformTransactionManager;
 @Lazy
 @Configuration
 @ConditionalOnClass(JpaRepository.class)
-public class ArilBatchFromDbToExcelConfig extends AbstractArilBatchConfig {
+public class ArilBatchFromDbToExcelConfig extends BaseArilBatchConfig {
 
     public static final String READER_NAME = "readerForDbToExcelJob";
     private static final String WRITER_NAME = "writerForDbToExcelJob";

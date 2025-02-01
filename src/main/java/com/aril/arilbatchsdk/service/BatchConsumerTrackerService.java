@@ -2,7 +2,7 @@ package com.aril.arilbatchsdk.service;
 
 import com.aril.arilbatchsdk.entity.BatchJobConsumerTracker;
 import com.aril.arilbatchsdk.entity.BatchJobSummary;
-import com.aril.arilbatchsdk.repository.BatchJobConsumerTrackerRepository;
+import com.aril.arilbatchsdk.jpa.repository.BatchJobConsumerTrackerRepository;
 import com.aril.arilbatchsdk.util.JobUtils;
 import com.aril.valhala.util.date.DateUtils;
 import lombok.RequiredArgsConstructor;

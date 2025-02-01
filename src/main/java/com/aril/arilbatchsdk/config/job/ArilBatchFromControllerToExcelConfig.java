@@ -36,7 +36,7 @@ import org.springframework.transaction.PlatformTransactionManager;
 @Lazy
 @Configuration
 @ConditionalOnClass(ResponseEntity.class)
-public class ArilBatchFromControllerToExcelConfig extends AbstractArilBatchConfig {
+public class ArilBatchFromControllerToExcelConfig extends BaseArilBatchConfig {
 
     public static final String READER_NAME = "readerForControllerToExcelJob";
     private static final String WRITER_NAME = "writerForControllerToExcelJob";

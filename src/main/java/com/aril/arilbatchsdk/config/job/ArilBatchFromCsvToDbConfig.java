@@ -37,7 +37,7 @@ import org.springframework.transaction.PlatformTransactionManager;
 @Configuration
 @EnableArilIdempotent
 @ConditionalOnClass({JpaRepository.class, ArilIdempotentTemplate.class})
-public class ArilBatchFromCsvToDbConfig extends AbstractArilBatchConfig {
+public class ArilBatchFromCsvToDbConfig extends BaseArilBatchIdempotentConfig {
 
     public static final String READER_NAME = "readerForCsvToDbJob";
     private static final String CHUNK_STEP_NAME = "chunkStepForCsvToDbJob";
@@ -90,7 +90,7 @@ public class ArilBatchFromCsvToDbConfig extends AbstractArilBatchConfig {
     public <T extends IdempotentBatchItem> FlatFileItemReader<T> readerForCsvToDbJob(
             @Value("#{jobParameters[T(com.aril.arilbatchsdk.config.ArilBatchConfigConstants).INPUT_PARAM]}") BatchJobParameterWrapper<BatchCsvToDbJobParameter> inputParam) throws Exception {
         BatchCsvToDbJobParameter jobParameter = inputParam.getJobParameter();
-        return configureFlatFileItemReader(READER_NAME, jobParameter.getResource(), jobParameter.getInputFields(), jobParameter.getInputItemClass());
+        return configureFlatFileItemReader(READER_NAME, jobParameter.getResource(), jobParameter.getInputFields(), jobParameter.getItemInputClass());
     }
 
     @Bean

@@ -2,7 +2,7 @@ package com.aril.arilbatchsdk.facade;
 
 import com.aril.arilbatchsdk.config.ArilBatchProperties;
 import com.aril.arilbatchsdk.entity.BatchJobSummary;
-import com.aril.arilbatchsdk.filter.usecase.FilterBatchJobUseCase;
+import com.aril.arilbatchsdk.jpa.specification.usecase.FilterBatchJobUseCase;
 import com.aril.arilbatchsdk.service.BatchJobSummaryService;
 import com.aril.valhala.product.ModuleType;
 import lombok.RequiredArgsConstructor;

@@ -12,13 +12,12 @@ import java.io.Serializable;
 @NoArgsConstructor
 @EqualsAndHashCode(callSuper = true)
 public class BatchConsumerCompletedEvent extends BaseEvent implements Serializable {
-    private static final String PUBLISHER = "batch-event-publisher";
     private static final String EVENT = "batch-consumer-completed-event";
 
     private BatchConsumerCompletedEventData data;
 
     public BatchConsumerCompletedEvent(BatchConsumerCompletedEventData data) {
-        super(EVENT, System.currentTimeMillis(), PUBLISHER);
+        super(EVENT, System.currentTimeMillis());
         this.data = data;
     }
 }

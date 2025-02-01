@@ -36,7 +36,7 @@ import org.springframework.transaction.PlatformTransactionManager;
 @Lazy
 @Configuration
 @ConditionalOnClass(ResponseEntity.class)
-public class ArilBatchFromControllerToCsvConfig extends AbstractArilBatchConfig {
+public class ArilBatchFromControllerToCsvConfig extends BaseArilBatchConfig {
 
     public static final String READER_NAME = "readerForControllerToCsvJob";
     private static final String WRITER_NAME = "writerForControllerToCsvJob";

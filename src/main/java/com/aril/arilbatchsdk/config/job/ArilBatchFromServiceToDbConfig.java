@@ -36,7 +36,7 @@ import org.springframework.transaction.PlatformTransactionManager;
 @Configuration
 @EnableArilIdempotent
 @ConditionalOnClass({ArilIdempotentTemplate.class})
-public class ArilBatchFromServiceToDbConfig extends AbstractArilBatchConfig {
+public class ArilBatchFromServiceToDbConfig extends BaseArilBatchIdempotentConfig {
 
     public static final String READER_NAME = "readerForServiceToDbJob";
     private static final String CHUNK_STEP_NAME = "chunkStepForServiceToDbJob";

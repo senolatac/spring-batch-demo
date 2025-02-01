@@ -36,7 +36,7 @@ import org.springframework.transaction.PlatformTransactionManager;
 @Lazy
 @Configuration
 @ConditionalOnClass({JpaRepository.class, ArilIdempotentTemplate.class})
-public class ArilBatchFromDbToServiceConfig extends AbstractArilBatchConfig {
+public class ArilBatchFromDbToServiceConfig extends BaseArilBatchIdempotentConfig {
 
     public static final String READER_NAME = "readerForDbToServiceJob";
     private static final String CHUNK_STEP_NAME = "chunkStepForDbToServiceJob";

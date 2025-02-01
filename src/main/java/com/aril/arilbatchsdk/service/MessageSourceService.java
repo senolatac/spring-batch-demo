@@ -3,6 +3,7 @@ package com.aril.arilbatchsdk.service;
 import com.aril.valhala.context.LocaleContext;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.MessageSource;
+import org.springframework.context.NoSuchMessageException;
 import org.springframework.stereotype.Service;
 
 import java.util.Locale;
@@ -35,9 +36,8 @@ public class MessageSourceService {
                     key,
                     Objects.requireNonNullElse(args, EMPTY_ARRAY),
                     Objects.requireNonNullElse(requestedLocale, LocaleContext.getLocale()));
-        } catch (Exception ex) {
+        } catch (NoSuchMessageException ex) {
             log.error("Message key not found with: {}", key);
-            log.debug("Unexpected exception occurred on message-localization with key: {}", key, ex);
             return key;
         }
     }

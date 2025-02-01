@@ -46,7 +46,7 @@ import org.springframework.transaction.PlatformTransactionManager;
 @EnableArilKafka
 @EnableArilIdempotent
 @ConditionalOnClass({ArilKafkaTemplate.class, ArilIdempotentTemplate.class})
-public class ArilBatchFromServiceToKafkaConfig extends AbstractArilBatchConfig {
+public class ArilBatchFromServiceToKafkaConfig extends BaseArilBatchKafkaConfig {
 
     public static final String READER_NAME = "readerForServiceToKafkaJob";
     public static final String CHUNK_STEP_NAME = "chunkStepForServiceToKafkaJob";

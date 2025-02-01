@@ -1,4 +1,0 @@
--------------------------------------------------------------------------------
-Test set: com.aril.arilbatchsdk.service.BatchJobLauncherServiceIntegrationTest
--------------------------------------------------------------------------------
-Tests run: 10, Failures: 0, Errors: 0, Skipped: 10, Time elapsed: 0.001 s -- in com.aril.arilbatchsdk.service.BatchJobLauncherServiceIntegrationTest

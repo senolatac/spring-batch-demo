@@ -37,7 +37,7 @@ import org.springframework.transaction.PlatformTransactionManager;
 @Configuration
 @EnableArilIdempotent
 @ConditionalOnClass({ArilIdempotentTemplate.class})
-public class ArilBatchFromExcelToServiceConfig extends AbstractArilBatchConfig {
+public class ArilBatchFromExcelToServiceConfig extends BaseArilBatchIdempotentConfig {
 
     public static final String READER_NAME = "readerForExcelToServiceJob";
     public static final String CHUNK_STEP_NAME = "chunkStepForExcelToServiceJob";
@@ -91,7 +91,7 @@ public class ArilBatchFromExcelToServiceConfig extends AbstractArilBatchConfig {
     public <T extends IdempotentBatchItem> StreamingXlsxItemReader<T> readerForExcelToServiceJob(
             @Value("#{jobParameters[T(com.aril.arilbatchsdk.config.ArilBatchConfigConstants).INPUT_PARAM]}") BatchJobParameterWrapper<BatchExcelToServiceJobParameter> inputParam) throws Exception {
         BatchExcelToServiceJobParameter jobParameter = inputParam.getJobParameter();
-        return configureStreamingXlsxItemReader(READER_NAME, jobParameter.getResource(), jobParameter.getInputFields(), jobParameter.getInputItemClass());
+        return configureStreamingXlsxItemReader(READER_NAME, jobParameter.getResource(), jobParameter.getInputFields(), jobParameter.getItemInputClass());
     }
 
     @Bean

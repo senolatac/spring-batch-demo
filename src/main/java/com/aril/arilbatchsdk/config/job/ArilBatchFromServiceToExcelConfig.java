@@ -33,7 +33,7 @@ import org.springframework.transaction.PlatformTransactionManager;
 
 @Lazy
 @Configuration
-public class ArilBatchFromServiceToExcelConfig extends AbstractArilBatchConfig {
+public class ArilBatchFromServiceToExcelConfig extends BaseArilBatchConfig {
 
     public static final String READER_NAME = "readerForServiceToExcelJob";
     private static final String WRITER_NAME = "writerForServiceToExcelJob";
